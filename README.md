@@ -1,3 +1,5 @@
 # Bis Interpreter
 
-Interpreted scripting language developed for thesis
+Interpreted scripting language implemented in C++.
+
+To be continued...
