@@ -1,11 +1,10 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-#include "Lexer/Lexer.h"
+#include "../include/Lexer.hpp"
+#include "../include/Exception.hpp"
 
-static bool had_error = false;
-
-std::string readFile(const std::string_view filename)
+std::string readFile(std::string_view filename)
 {
 	std::ifstream file{filename.data(), std::ios::ate};
 	if (!file)
@@ -23,24 +22,25 @@ std::string readFile(const std::string_view filename)
 	return file_contents;
 }
 
-void initFile(const std::string_view filename)
+void run(std::string_view source)
+{
+	Lexer lexer{source};
+	// std::vector<Token> tokens{lexer.scanTokens()};
+	//  for (const Token token : tokens)
+	//{
+	//  std::cout << token << '\n';
+	// }
+}
+void initFile(std::string_view filename)
 {
 	std::string file_contents{readFile(filename)};
 	std::cout << file_contents << '\n';
-	// TODO; Pass the file_contents to the tokenizer
-	// run(file_contents);
-}
-
-void run(std::string_view source)
-{
-	bis::Lexer lexer{source};
-	std::vector<bis::Token> tokens;
+	run(file_contents);
 }
 
 void runPrompt()
 {
 	std::cout << "type !exit to exit program." << '\n';
-
 	while (true)
 	{
 		std::cout << "> ";
@@ -51,12 +51,6 @@ void runPrompt()
 			std::cout << "exiting program.";
 			return;
 		}
-		if (std::cin.bad() or std::cin.eof())
-		{
-			std::cout << '\n';
-			return;
-		}
-		std::cout << line << '\n';
 		run(line);
 	}
 }
@@ -69,6 +63,5 @@ int main(int argc, char *argv[])
 		initFile(argv[1]);
 	else
 		runPrompt();
-
 	return 0;
 }
