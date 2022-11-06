@@ -60,14 +60,14 @@ struct Token
         _EOF
     };
 
-    Token(TokenType type, int line) noexcept : m_type{type}, m_line{line} {}
+    Token(TokenType type, size_t line) noexcept : m_type{type}, m_line{line} {}
 
-    Token(TokenType type, std::string_view lexeme, int line) noexcept
+    Token(TokenType type, std::string_view lexeme, size_t line) noexcept
         : m_type{type}, m_lexeme{lexeme}, m_line{line} {}
 
     const TokenType m_type;
     const std::string m_lexeme;
-    const int m_line = -1;
+    size_t m_line;
 };
 
 #endif

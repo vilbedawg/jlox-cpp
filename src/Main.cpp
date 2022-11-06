@@ -2,18 +2,16 @@
 #include <string>
 #include <iostream>
 #include "../include/Lexer.hpp"
-#include "../include/Exception.hpp"
+#include "../include/Error_handler.hpp"
 
 std::string readFile(std::string_view filename)
 {
 	std::ifstream file{filename.data(), std::ios::ate};
 	if (!file)
 	{
-		// TODO; Better error message.
 		std::cerr << "Failed to open file " << filename.data() << '\n';
 		std::exit(74); // I/O error
 	}
-
 	std::string file_contents;
 	file_contents.resize(file.tellg());
 	file.seekg(0, std::ios::beg);
@@ -31,6 +29,7 @@ void run(std::string_view source)
 	//  std::cout << token << '\n';
 	// }
 }
+
 void initFile(std::string_view filename)
 {
 	std::string file_contents{readFile(filename)};
@@ -40,17 +39,13 @@ void initFile(std::string_view filename)
 
 void runPrompt()
 {
-	std::cout << "type !exit to exit program." << '\n';
 	while (true)
 	{
 		std::cout << "> ";
 		std::string line;
-		std::getline(std::cin, line);
-		if (line == "!exit")
-		{
-			std::cout << "exiting program.";
+		if (!std::getline(std::cin, line))
 			return;
-		}
+
 		run(line);
 	}
 }

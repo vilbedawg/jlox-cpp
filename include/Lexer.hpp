@@ -2,7 +2,7 @@
 #define BIS_LEXER_HPP
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <any>
 #include <string>
 #include <iostream>
@@ -10,18 +10,16 @@
 class Lexer
 {
 public:
-    Lexer(std::string_view source) : m_source{source}
-    {
-    }
+    Lexer(std::string_view source) : m_source{source} {}
     std::vector<Token> scanTokens();
-    bool isEOF();
+    bool isEOF() const;
     void printToken(Token token); 
 
 private:
     const std::string m_source;
     size_t start{0}, current{0}, line{1};
     std::vector<Token> m_tokens;
-    const std::map<std::string, Token::TokenType> keywords{
+    const std::unordered_map<std::string, Token::TokenType> keywords{
         {"and",     Token::TokenType::AND},
         {"or",      Token::TokenType::OR},
         {"class",   Token::TokenType::CLASS},
@@ -47,15 +45,16 @@ private:
     bool match(char excepted);
     
     char advance();
-    char peek(); 
-    char peekNext();
+    char peek() const; 
+    char peekNext() const;
 
-    void scanToken();
     void addToken(Token::TokenType type);
     void addToken(Token::TokenType type, std::any literal);
-    void makeString();
-    void makeNumber();
-    void makeIdentifier();
+
+    void scanToken();
+    void string();
+    void number();
+    void identifier();
 };
 
 #endif
