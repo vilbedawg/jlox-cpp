@@ -1,55 +1,34 @@
 #ifndef BIS_LEXER_HPP
 #define BIS_LEXER_HPP
 
-#include <vector>
-#include <unordered_map>
-#include <any>
-#include <string>
-#include <iostream>
 #include "../include/Token.hpp"
+#include <iostream>
+#include <unordered_map>
+#include <vector>
 class Lexer
 {
 public:
-    Lexer(std::string_view source) : m_source{source} {}
-    std::vector<Token> scanTokens();
-    bool isEOF() const;
-    void printToken(Token token); 
+    Lexer(std::string_view source);
+    std::vector<Token>& scanTokens();
 
 private:
-    const std::string m_source;
-    size_t start{0}, current{0}, line{1};
+    std::string m_source;
+    size_t start, current, line;
     std::vector<Token> m_tokens;
-    const std::unordered_map<std::string, Token::TokenType> keywords{
-        {"and",     Token::TokenType::AND},
-        {"or",      Token::TokenType::OR},
-        {"class",   Token::TokenType::CLASS},
-        {"if",      Token::TokenType::IF},
-        {"else",    Token::TokenType::ELSE},
-        {"false",   Token::TokenType::BIS_FALSE},
-        {"true",    Token::TokenType::BIS_TRUE},
-        {"fn",      Token::TokenType::FN},
-        {"for",     Token::TokenType::FOR},
-        {"while",   Token::TokenType::WHILE},
-        {"nil",     Token::TokenType::NIL},
-        {"print",   Token::TokenType::PRINT},
-        {"return",  Token::TokenType::RETURN},
-        {"super",   Token::TokenType::SUPER},
-        {"this",    Token::TokenType::THIS},
-        {"token",   Token::TokenType::VAR},
-        {"lambda",  Token::TokenType::LAMBDA}
-    };
+    const std::unordered_map<std::string, Token::TokenType> keywords;
 
-    bool isAlpha(char c);
-    bool isAlphaNumeric(char c);
-    bool isDigit(char c);
-    bool match(char excepted);
-    
+    bool isEOF() const;
+    bool isDigit(char c) const;
+    bool isAlpha(char c) const;
+    bool isAlphaNumeric(char c) const;
+    bool match(char expected);
+
     char advance();
-    char peek() const; 
+    char peek() const;
     char peekNext() const;
 
     void addToken(Token::TokenType type);
-    void addToken(Token::TokenType type, std::any literal);
+    void addToken(Token::TokenType type, literalType literal);
 
     void scanToken();
     void string();

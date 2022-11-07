@@ -1,23 +1,23 @@
 #ifndef EXCEPTION_HPP
 #define EXCEPTION_HPP
 
+#include <iostream>
 #include <string>
 #include <vector>
-class ErrorHandler
+namespace Error
 {
-public:
     struct ErrorInfo
     {
-        int line;
-        std::string m_where;
-        std::string m_message;
+        const size_t line;
+        const std::string where;
+        const std::string message;
     };
-    static void report();
-    static void add(size_t line, std::string_view where, std::string_view message);
-    static void clear();
-    static bool hadError;
-    static bool hadRuntimeError;
-    static std::vector<ErrorInfo> exceptionList;
+    void report() noexcept;
+    void add(const size_t line, const std::string where, const std::string message) noexcept;
+    void clear() noexcept;
+    extern bool hadError;
+    extern bool hadRuntimeError;
+    extern std::vector<ErrorInfo> exceptionList;
 };
 
 #endif

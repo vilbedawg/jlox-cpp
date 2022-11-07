@@ -1,7 +1,10 @@
 #ifndef BIS_TYPES_TOKEN_H
 #define BIS_TYPES_TOKEN_H
+#include <map>
 #include <string>
+#include <variant>
 
+using literalType = std::variant<std::string, double>;
 struct Token
 {
     enum class TokenType
@@ -60,14 +63,12 @@ struct Token
         _EOF
     };
 
-    Token(TokenType type, size_t line) noexcept : m_type{type}, m_line{line} {}
-
-    Token(TokenType type, std::string_view lexeme, size_t line) noexcept
-        : m_type{type}, m_lexeme{lexeme}, m_line{line} {}
-
+    Token(const TokenType type, const std::string lexeme, literalType literal, const size_t line);
+    std::string toString() const;
+    literalType m_literal;
     const TokenType m_type;
     const std::string m_lexeme;
-    size_t m_line;
+    const size_t m_line;
 };
 
 #endif
