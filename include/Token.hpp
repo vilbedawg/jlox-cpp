@@ -1,10 +1,9 @@
 #ifndef BIS_TYPES_TOKEN_H
 #define BIS_TYPES_TOKEN_H
-#include <map>
 #include <string>
 #include <variant>
 
-using literalType = std::variant<std::string, double>;
+using literalType = std::variant<std::string, double, bool>;
 struct Token
 {
     enum class TokenType
@@ -13,7 +12,7 @@ struct Token
         LEFT_PAREN,
         RIGHT_PAREN,
         LEFT_BRACE,
-        RUGHT_BRACE,
+        RIGHT_BRACE,
         COMMA,
         DOT,
         MINUS,
@@ -21,10 +20,10 @@ struct Token
         SLASH,
         SEMICOLON,
         STAR,
-        LEFT_BRACET,
 
         // One or two character tokens
         RIGHT_BRACKET,
+        LEFT_BRACKET,
         EXCLAMATION,
         EXCLAMATION_EQUAL,
         EQUAL,
@@ -47,8 +46,8 @@ struct Token
         CLASS,
         IF,
         ELSE,
-        BIS_FALSE,
-        BIS_TRUE,
+        _FALSE,
+        _TRUE,
         FN,
         FOR,
         WHILE,
@@ -63,12 +62,15 @@ struct Token
         _EOF
     };
 
-    Token(const TokenType type, const std::string lexeme, literalType literal, const size_t line);
-    std::string toString() const;
-    literalType m_literal;
+    Token(const TokenType type, const std::string lexeme, const literalType literal,
+          const size_t line);
+    const literalType m_literal;
     const TokenType m_type;
     const std::string m_lexeme;
     const size_t m_line;
 };
+
+std::ostream& operator<<(std::ostream& os, const Token& token);
+std::ostream& operator<<(std::ostream& os, const Token::TokenType type);
 
 #endif

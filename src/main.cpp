@@ -15,6 +15,7 @@ std::string readFile(std::string_view filename)
     file.seekg(0, std::ios::beg);
     file.read(file_contents.data(), file_contents.size());
     file.close();
+
     return file_contents;
 }
 
@@ -22,17 +23,18 @@ void run(std::string_view source)
 {
     Lexer lexer{source};
     std::vector<Token> tokens{lexer.scanTokens()};
-    for (const Token& token : tokens)
+    for (const auto& token : tokens)
     {
-        std::cout << token.toString() << '\n';
+        std::cout << token << '\n';
     }
 }
 
 void initFile(std::string_view filename)
 {
     std::string file_contents{readFile(filename)};
-    std::cout << file_contents << '\n';
     run(file_contents);
+    if (Error::hadError)
+        std::exit(65);
 }
 
 void runPrompt()

@@ -1,19 +1,15 @@
 #include "../include/Lexer.hpp"
 #include "../include/Error_handler.hpp"
 
-using TokenType = Token::TokenType;
-
 Lexer ::Lexer(std ::string_view source)
     : start{0}, current{0}, line{1}, m_source{source},
-      keywords{{"and", TokenType::AND},       {"or", TokenType::OR},
-               {"class", TokenType::CLASS},   {"if", TokenType::IF},
-               {"else", TokenType::ELSE},     {"false", TokenType::BIS_FALSE},
-               {"true", TokenType::BIS_TRUE}, {"fn", TokenType::FN},
-               {"for", TokenType::FOR},       {"while", TokenType::WHILE},
-               {"nil", TokenType::NIL},       {"print", TokenType::PRINT},
-               {"return", TokenType::RETURN}, {"super", TokenType::SUPER},
-               {"this", TokenType::THIS},     {"token", TokenType::VAR},
-               {"lambda", TokenType::LAMBDA}}
+      keywords{
+          {"and", TokenType::AND},       {"or", TokenType::OR},        {"class", TokenType::CLASS},
+          {"if", TokenType::IF},         {"else", TokenType::ELSE},    {"false", TokenType::_FALSE},
+          {"true", TokenType::_TRUE},    {"fn", TokenType::FN},        {"for", TokenType::FOR},
+          {"while", TokenType::WHILE},   {"nil", TokenType::NIL},      {"print", TokenType::PRINT},
+          {"return", TokenType::RETURN}, {"super", TokenType::SUPER},  {"this", TokenType::THIS},
+          {"token", TokenType::VAR},     {"lambda", TokenType::LAMBDA}}
 {
 }
 
@@ -36,8 +32,8 @@ void Lexer::scanToken()
     // 1 character lexemes.
     case '(': addToken(TokenType::LEFT_PAREN); break;
     case ')': addToken(TokenType::RIGHT_PAREN); break;
-    case '{': addToken(TokenType::LEFT_BRACET); break;
-    case '}': addToken(TokenType::RIGHT_BRACKET); break;
+    case '{': addToken(TokenType::LEFT_BRACE); break;
+    case '}': addToken(TokenType::RIGHT_BRACE); break;
     case ',': addToken(TokenType::COMMA); break;
     case '.': addToken(TokenType::DOT); break;
     case '-': addToken(TokenType::MINUS); break;
@@ -68,9 +64,26 @@ void Lexer::scanToken()
     default:
         if (isDigit(c))
             number();
+        else if (isAlpha(c))
+            identifier();
         else
             Error::add(line, "", std::string("Unexpected character: '") + c + "'.");
     }
+}
+
+void Lexer::identifier()
+{
+    while (isAlphaNumeric(peek()))
+        static_cast<void>(advance());
+
+    const std::string text{m_source.substr(start, current - start)};
+    TokenType type{keywords.contains(text) ? keywords.at(text) : TokenType::IDENTIFIER};
+    if (type == TokenType::_TRUE)
+        addToken(type, true);
+    else if (type == TokenType::_FALSE)
+        addToken(type, false);
+    else
+        addToken(type);
 }
 
 void Lexer::number()
@@ -108,7 +121,7 @@ void Lexer::string()
     addToken(TokenType::STRING, m_source.substr(start + 1, current - start - 2));
 }
 
-bool Lexer::match(char expected)
+bool Lexer::match(const char expected)
 {
     if (isEOF() || m_source.at(current) != expected)
         return false;
@@ -126,7 +139,17 @@ char Lexer::peekNext() const
     return (current + 1 >= m_source.length()) ? '\0' : m_source.at(current + 1);
 }
 
-bool Lexer::isDigit(char c) const
+bool Lexer::isAlpha(const char c) const
+{
+    return (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_');
+}
+
+bool Lexer::isAlphaNumeric(const char c) const
+{
+    return isAlpha(c) || isDigit(c);
+}
+
+bool Lexer::isDigit(const char c) const
 {
     return c >= '0' && c <= '9';
 }
@@ -146,7 +169,7 @@ void Lexer::addToken(const TokenType type)
     addToken(type, "");
 }
 
-void Lexer::addToken(const TokenType type, literalType literal)
+void Lexer::addToken(const TokenType type, const literalType literal)
 {
     m_tokens.emplace_back(Token(type, m_source.substr(start, current - start), literal, line));
 }
