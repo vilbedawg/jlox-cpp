@@ -34,7 +34,9 @@ void initFile(std::string_view filename)
     std::string file_contents{readFile(filename)};
     run(file_contents);
     if (Error::hadError)
+    {
         std::exit(65);
+    }
 }
 
 void runPrompt()
@@ -44,21 +46,32 @@ void runPrompt()
         std::cout << "> ";
         std::string line;
         if (!std::getline(std::cin, line))
+        {
             return;
+        }
 
         run(line);
         if (Error::hadError)
+        {
             std::exit(65);
+        }
     }
 }
 
 int main(int argc, char* argv[])
 {
     if (argc > 2)
+    {
         std::exit(64);
+    }
     else if (argc == 2)
+    {
         initFile(argv[1]);
+    }
     else
+    {
         runPrompt();
+    }
+
     return 0;
 }

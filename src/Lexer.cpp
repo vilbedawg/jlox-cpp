@@ -48,10 +48,16 @@ void Lexer::scanToken()
     case '>': addToken(match('=') ? TokenType::GREATER_EQUAL : TokenType::GREATER); break;
     case '/':
         if (match('/'))
+        {
             while (peek() != '\n' && !isEOF())
+            {
                 static_cast<void>(advance());
+            }
+        }
         else
+        {
             addToken(TokenType::SLASH);
+        }
 
     // ignore whitespace.
     case ' ':
@@ -63,40 +69,61 @@ void Lexer::scanToken()
     case '"': string(); break;
     default:
         if (isDigit(c))
+        {
             number();
+        }
         else if (isAlpha(c))
+        {
             identifier();
+        }
         else
+        {
             Error::add(line, "", std::string("Unexpected character: '") + c + "'.");
+        }
     }
 }
 
 void Lexer::identifier()
 {
     while (isAlphaNumeric(peek()))
+    {
         static_cast<void>(advance());
+    }
 
     const std::string text{m_source.substr(start, current - start)};
     TokenType type{keywords.contains(text) ? keywords.at(text) : TokenType::IDENTIFIER};
+
     if (type == TokenType::_TRUE)
+    {
         addToken(type, true);
+    }
     else if (type == TokenType::_FALSE)
+    {
         addToken(type, false);
+    }
     else
+    {
         addToken(type);
+    }
 }
 
 void Lexer::number()
 {
     while (isDigit(peek()))
+    {
         static_cast<void>(advance());
+    }
 
     // Look for a fractional part.
     if (peek() == '.' && isDigit(peekNext()))
     {
+        // Consume the "."
         static_cast<void>(advance());
+
         while (isDigit(peek()))
+        {
             static_cast<void>(advance());
+        }
     }
     addToken(TokenType::NUMBER, std::stod(m_source.substr(start, current - start)));
 }
@@ -106,7 +133,9 @@ void Lexer::string()
     while (peek() != '"' && !isEOF())
     {
         if (peek() == '\n')
+        {
             line++;
+        }
         static_cast<void>(advance());
     }
     if (isEOF())
@@ -114,7 +143,8 @@ void Lexer::string()
         Error::add(line, "", "Unterminated string.");
         return;
     }
-    // The closing ".
+
+    // Consume the closing ".
     static_cast<void>(advance());
 
     // Trim the surrounding quotes.
@@ -124,7 +154,10 @@ void Lexer::string()
 bool Lexer::match(const char expected)
 {
     if (isEOF() || m_source.at(current) != expected)
+    {
         return false;
+    }
+
     current++;
     return true;
 }
@@ -161,7 +194,7 @@ bool Lexer::isEOF() const
 
 char Lexer::advance()
 {
-    return m_source.at(current++);
+    return m_source[current++];
 }
 
 void Lexer::addToken(const TokenType type)

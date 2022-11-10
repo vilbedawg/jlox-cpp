@@ -59,6 +59,7 @@ std::ostream& operator<<(std::ostream& os, const Token::TokenType type)
         {TokenType::LAMBDA, "LAMBDA"},
         {TokenType::_EOF, "EOF"},
     };
+
     os << type_map.at(type);
     return os;
 }
@@ -74,12 +75,15 @@ std::ostream& operator<<(std::ostream& os, const Token& token)
         literal_string = std::to_string(std::get<double>(literal_value));
         literal_string.erase(literal_string.find_last_not_of('0') + 2, std::string::npos);
         if (literal_string.ends_with('.'))
+        {
             literal_string.pop_back();
+        }
         break;
     case TokenType::_FALSE: literal_string = "false"; break;
     case TokenType::_TRUE: literal_string = "true"; break;
     case TokenType::NIL: literal_string = "nil"; break;
     }
+
     os << token.m_type << ' ' << token.m_lexeme << ' ' << literal_string;
     return os;
 }
