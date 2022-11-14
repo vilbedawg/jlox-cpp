@@ -6,7 +6,7 @@
 using TokenType = Token::TokenType;
 
 Token::Token(const TokenType type, const std::string lexeme, const literalType literal,
-             const size_t line)
+             const unsigned int line)
     : m_type{type}, m_lexeme{lexeme}, m_literal{literal}, m_line{line}
 {
 }

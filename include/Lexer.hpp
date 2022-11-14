@@ -13,7 +13,7 @@ public:
 
 private:
     std::string m_source;
-    size_t start, current, line;
+    unsigned int start, current, line;
     std::vector<Token> m_tokens;
     const std::unordered_map<std::string, TokenType> keywords;
 
