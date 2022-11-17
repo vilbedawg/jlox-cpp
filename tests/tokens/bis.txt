@@ -64,6 +64,10 @@ for (var a = 1; a < 10; a = a + 1)
 }
 
 
+
+
+
+
 fn returnFunction() {
   var outside = "outside";
 
@@ -76,6 +80,9 @@ fn returnFunction() {
 
 var function = returnFunction();
 function();
+
+
+
 
 
 

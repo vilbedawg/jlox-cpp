@@ -1,5 +1,5 @@
-#include "../include/Error_handler.hpp"
 #include "../include/Lexer.hpp"
+#include "../include/Logger.hpp"
 #include <fstream>
 
 std::string readFile(std::string_view filename)

@@ -1,5 +1,5 @@
 #include "../include/Lexer.hpp"
-#include "../include/Error_handler.hpp"
+#include "../include/Logger.hpp"
 
 Lexer ::Lexer(std ::string_view source)
     : start{0}, current{0}, line{1}, m_source{source},
@@ -26,9 +26,16 @@ std::vector<Token>& Lexer::scanTokens()
 
 void Lexer::scanToken()
 {
-    char c = advance();
+    char c = peek();
+    advance();
     switch (c)
     {
+    // ignore whitespace.
+    case ' ':
+    case '\r':
+    case '\t': break;
+    case '\n': line++; break;
+
     // 1 character lexemes.
     case '(': addToken(TokenType::LEFT_PAREN); break;
     case ')': addToken(TokenType::RIGHT_PAREN); break;
@@ -51,19 +58,13 @@ void Lexer::scanToken()
         {
             while (peek() != '\n' && !isEOF())
             {
-                static_cast<void>(advance());
+                advance();
             }
         }
         else
         {
             addToken(TokenType::SLASH);
         }
-
-    // ignore whitespace.
-    case ' ':
-    case '\r':
-    case '\t': break;
-    case '\n': line++; break;
 
     // Literals.
     case '"': string(); break;
@@ -87,7 +88,7 @@ void Lexer::identifier()
 {
     while (isAlphaNumeric(peek()))
     {
-        static_cast<void>(advance());
+        advance();
     }
 
     const std::string text{m_source.substr(start, current - start)};
@@ -111,18 +112,18 @@ void Lexer::number()
 {
     while (isDigit(peek()))
     {
-        static_cast<void>(advance());
+        advance();
     }
 
     // Look for a fractional part.
     if (peek() == '.' && isDigit(peekNext()))
     {
         // Consume the "."
-        static_cast<void>(advance());
+        advance();
 
         while (isDigit(peek()))
         {
-            static_cast<void>(advance());
+            advance();
         }
     }
     addToken(TokenType::NUMBER, std::stod(m_source.substr(start, current - start)));
@@ -136,7 +137,7 @@ void Lexer::string()
         {
             line++;
         }
-        static_cast<void>(advance());
+        advance();
     }
     if (isEOF())
     {
@@ -145,7 +146,7 @@ void Lexer::string()
     }
 
     // Consume the closing ".
-    static_cast<void>(advance());
+    advance();
 
     // Trim the surrounding quotes.
     addToken(TokenType::STRING, m_source.substr(start + 1, current - start - 2));
@@ -192,9 +193,9 @@ bool Lexer::isEOF() const
     return current >= m_source.size();
 }
 
-char Lexer::advance()
+void Lexer::advance()
 {
-    return m_source[current++];
+    current++;
 }
 
 void Lexer::addToken(const TokenType type)

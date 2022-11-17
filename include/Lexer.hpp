@@ -12,9 +12,9 @@ public:
     std::vector<Token>& scanTokens();
 
 private:
-    std::string m_source;
-    unsigned int start, current, line;
+    const std::string m_source;
     std::vector<Token> m_tokens;
+    unsigned int start, current, line;
     const std::unordered_map<std::string, TokenType> keywords;
 
     bool isEOF() const;
@@ -23,7 +23,7 @@ private:
     bool isAlphaNumeric(const char c) const;
     bool match(const char expected);
 
-    char advance();
+    void advance();
     char peek() const;
     char peekNext() const;
 
