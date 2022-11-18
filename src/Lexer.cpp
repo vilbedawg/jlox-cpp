@@ -42,14 +42,14 @@ void Lexer::scanToken()
     case '}': addToken(TokenType::RIGHT_BRACE); break;
     case ',': addToken(TokenType::COMMA); break;
     case '.': addToken(TokenType::DOT); break;
-    case '-': addToken(TokenType::MINUS); break;
-    case '+': addToken(TokenType::PLUS); break;
     case ';': addToken(TokenType::SEMICOLON); break;
     case '*': addToken(TokenType::STAR); break;
 
     // > 1 character lexemes.
     case '!': addToken(match('=') ? TokenType::EXCLAMATION_EQUAL : TokenType::EXCLAMATION); break;
     case '=': addToken(match('=') ? TokenType::EQUAL_EQUAL : TokenType::EQUAL); break;
+    case '-': addToken(match('-') ? TokenType::MINUS_MINUS : TokenType::MINUS); break;
+    case '+': addToken(match('+') ? TokenType::PLUS_PLUS : TokenType::PLUS); break;
     case '<': addToken(match('=') ? TokenType::LESS_EQUAL : TokenType::LESS); break;
     case '>': addToken(match('=') ? TokenType::GREATER_EQUAL : TokenType::GREATER); break;
     case '/':

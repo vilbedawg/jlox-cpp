@@ -1,7 +1,6 @@
 #ifndef BIS_TYPES_TOKEN_H
 #define BIS_TYPES_TOKEN_H
 #include <string>
-#include <variant>
 
 struct Token
 {
