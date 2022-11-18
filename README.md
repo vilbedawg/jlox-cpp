@@ -1,5 +1,5 @@
-# Bis Interpreter
+# BIS Interpreter
 
-Interpreted scripting language implemented in C++.
+This is an implementation of the AST-interpreter built in Rober Nystrom's book "Crafting Interpreters"
 
-To be continued...
+Todo
