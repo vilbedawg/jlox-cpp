@@ -1,17 +1,16 @@
 #include "../include/Lexer.hpp"
 #include "../include/Logger.hpp"
 
-Lexer ::Lexer(std ::string_view source)
-    : start{0}, current{0}, line{1}, m_source{source},
-      keywords{
-          {"and", TokenType::AND},       {"or", TokenType::OR},        {"class", TokenType::CLASS},
-          {"if", TokenType::IF},         {"else", TokenType::ELSE},    {"false", TokenType::_FALSE},
-          {"true", TokenType::_TRUE},    {"fn", TokenType::FN},        {"for", TokenType::FOR},
-          {"while", TokenType::WHILE},   {"nil", TokenType::NIL},      {"print", TokenType::PRINT},
-          {"return", TokenType::RETURN}, {"super", TokenType::SUPER},  {"this", TokenType::THIS},
-          {"token", TokenType::VAR},     {"lambda", TokenType::LAMBDA}}
-{
-}
+const std::unordered_map<std::string, TokenType> Lexer::keywords{
+    {"and", TokenType::AND},       {"or", TokenType::OR},         {"class", TokenType::CLASS},
+    {"if", TokenType::IF},         {"else", TokenType::ELSE},     {"false", TokenType::_FALSE},
+    {"true", TokenType::_TRUE},    {"fn", TokenType::FN},         {"for", TokenType::FOR},
+    {"while", TokenType::WHILE},   {"nil", TokenType::NIL},       {"print", TokenType::PRINT},
+    {"return", TokenType::RETURN}, {"super", TokenType::SUPER},   {"this", TokenType::THIS},
+    {"token", TokenType::VAR},     {"lambda", TokenType::LAMBDA},
+};
+
+Lexer ::Lexer(std ::string_view source) : start{0}, current{0}, line{1}, m_source{source} {}
 
 std::vector<Token>& Lexer::scanTokens()
 {
