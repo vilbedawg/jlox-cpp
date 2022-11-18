@@ -5,9 +5,8 @@
 
 using TokenType = Token::TokenType;
 
-Token::Token(const TokenType type, const std::string lexeme, const literalType literal,
-             const unsigned int line)
-    : m_type{type}, m_lexeme{lexeme}, m_literal{literal}, m_line{line}
+Token::Token(const TokenType type, const std::string lexeme, const unsigned int line)
+    : m_type{type}, m_lexeme{lexeme}, m_line{line}
 {
 }
 
@@ -66,24 +65,6 @@ std::ostream& operator<<(std::ostream& os, const Token::TokenType type)
 
 std::ostream& operator<<(std::ostream& os, const Token& token)
 {
-    std::string literal_string{"None"};
-    const literalType& literal_value{token.m_literal};
-    switch (token.m_type)
-    {
-    case TokenType::STRING: literal_string = std::get<std::string>(literal_value); break;
-    case TokenType::NUMBER:
-        literal_string = std::to_string(std::get<double>(literal_value));
-        literal_string.erase(literal_string.find_last_not_of('0') + 2, std::string::npos);
-        if (literal_string.ends_with('.'))
-        {
-            literal_string.pop_back();
-        }
-        break;
-    case TokenType::_FALSE: literal_string = "false"; break;
-    case TokenType::_TRUE: literal_string = "true"; break;
-    case TokenType::NIL: literal_string = "nil"; break;
-    }
-
-    os << token.m_type << ' ' << token.m_lexeme << ' ' << literal_string;
+    os << token.m_type << ' ' << token.m_lexeme;
     return os;
 }

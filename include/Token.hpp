@@ -3,7 +3,6 @@
 #include <string>
 #include <variant>
 
-using literalType = std::variant<std::string, double, bool>;
 struct Token
 {
     enum class TokenType
@@ -26,9 +25,7 @@ struct Token
         _EOF
     };
 
-    Token(const TokenType type, const std::string lexeme, const literalType literal,
-          const unsigned int line);
-    const literalType m_literal;
+    Token(const TokenType type, const std::string lexeme, const unsigned int line);
     const TokenType m_type;
     const std::string m_lexeme;
     const unsigned int m_line;

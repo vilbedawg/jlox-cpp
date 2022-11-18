@@ -19,7 +19,7 @@ std::vector<Token>& Lexer::scanTokens()
         start = current;
         scanToken();
     }
-    m_tokens.emplace_back(Token(TokenType::_EOF, "", "", line));
+    m_tokens.emplace_back(Token(TokenType::_EOF, "", line));
     return m_tokens;
 }
 
@@ -91,20 +91,7 @@ void Lexer::identifier()
     }
 
     const std::string text{m_source.substr(start, current - start)};
-    TokenType type{keywords.contains(text) ? keywords.at(text) : TokenType::IDENTIFIER};
-
-    if (type == TokenType::_TRUE)
-    {
-        addToken(type, true);
-    }
-    else if (type == TokenType::_FALSE)
-    {
-        addToken(type, false);
-    }
-    else
-    {
-        addToken(type);
-    }
+    addToken(keywords.contains(text) ? keywords.at(text) : TokenType::IDENTIFIER);
 }
 
 void Lexer::number()
@@ -125,7 +112,7 @@ void Lexer::number()
             advance();
         }
     }
-    addToken(TokenType::NUMBER, std::stod(m_source.substr(start, current - start)));
+    addToken(TokenType::NUMBER);
 }
 
 void Lexer::string()
@@ -148,7 +135,7 @@ void Lexer::string()
     advance();
 
     // Trim the surrounding quotes.
-    addToken(TokenType::STRING, m_source.substr(start + 1, current - start - 2));
+    addToken(TokenType::STRING);
 }
 
 bool Lexer::match(const char expected)
@@ -197,12 +184,13 @@ void Lexer::advance()
     current++;
 }
 
-void Lexer::addToken(const TokenType type)
+std::string Lexer::getLexeme(TokenType type) const
 {
-    addToken(type, "");
+    return (type == TokenType::STRING) ? m_source.substr(start + 1, current - start - 2)
+                                       : m_source.substr(start, current - start);
 }
 
-void Lexer::addToken(const TokenType type, const literalType literal)
+void Lexer::addToken(const TokenType type)
 {
-    m_tokens.emplace_back(Token(type, m_source.substr(start, current - start), literal, line));
+    m_tokens.emplace_back(Token(type, getLexeme(type), line));
 }

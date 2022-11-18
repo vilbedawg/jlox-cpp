@@ -22,14 +22,13 @@ private:
     bool isAlpha(const char c) const;
     bool isAlphaNumeric(const char c) const;
     bool match(const char expected);
+    std::string getLexeme(TokenType type) const;
 
     void advance();
     char peek() const;
     char peekNext() const;
 
     void addToken(TokenType type);
-    void addToken(TokenType type, literalType literal);
-
     void scanToken();
     void string();
     void number();
