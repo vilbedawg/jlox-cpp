@@ -195,5 +195,5 @@ std::string Lexer::getLexeme(TokenType type) const
 
 void Lexer::addToken(const TokenType type)
 {
-    m_tokens.emplace_back(Token(type, std::move(getLexeme(type)), line));
+    m_tokens.emplace_back(type, std::move(getLexeme(type)), line);
 }
