@@ -52,6 +52,7 @@ std::ostream& operator<<(std::ostream& os, const Token::TokenType type)
         {TokenType::NIL, "NIL"},
         {TokenType::PRINT, "PRINT"},
         {TokenType::RETURN, "RETURN"},
+        {TokenType::BREAK, "BREAK"},
         {TokenType::SUPER, "SUPER"},
         {TokenType::THIS, "THIS"},
         {TokenType::VAR, "VAR"},

@@ -7,10 +7,11 @@ const std::unordered_map<std::string, TokenType> Lexer::keywords{
     {"true", TokenType::_TRUE},    {"fn", TokenType::FN},         {"for", TokenType::FOR},
     {"while", TokenType::WHILE},   {"nil", TokenType::NIL},       {"print", TokenType::PRINT},
     {"return", TokenType::RETURN}, {"super", TokenType::SUPER},   {"this", TokenType::THIS},
-    {"token", TokenType::VAR},     {"lambda", TokenType::LAMBDA},
-};
+    {"token", TokenType::VAR},     {"lambda", TokenType::LAMBDA}, {"break", TokenType::BREAK}};
 
-Lexer ::Lexer(std ::string_view source) : start{0}, current{0}, line{1}, m_source{source} {}
+Lexer ::Lexer(std ::string_view source) : start{0}, current{0}, line{1}, m_source{source}
+{
+}
 
 std::vector<Token>& Lexer::scanTokens()
 {
@@ -40,6 +41,8 @@ void Lexer::scanToken()
     case ')': addToken(TokenType::RIGHT_PAREN); break;
     case '{': addToken(TokenType::LEFT_BRACE); break;
     case '}': addToken(TokenType::RIGHT_BRACE); break;
+    case '[': addToken(TokenType::LEFT_BRACKET); break;
+    case ']': addToken(TokenType::RIGHT_BRACKET); break;
     case ',': addToken(TokenType::COMMA); break;
     case '.': addToken(TokenType::DOT); break;
     case ';': addToken(TokenType::SEMICOLON); break;
@@ -192,5 +195,5 @@ std::string Lexer::getLexeme(TokenType type) const
 
 void Lexer::addToken(const TokenType type)
 {
-    m_tokens.emplace_back(Token(type, getLexeme(type), line));
+    m_tokens.emplace_back(Token(type, std::move(getLexeme(type)), line));
 }

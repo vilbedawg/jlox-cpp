@@ -20,4 +20,4 @@ namespace Error
     extern std::vector<ErrorInfo> exceptionList;
 };
 
-#endif
+#endif // LOGGER_HPP

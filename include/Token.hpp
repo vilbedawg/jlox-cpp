@@ -19,7 +19,7 @@ struct Token
 
         // Keyword
         AND, OR, CLASS, IF, ELSE, _FALSE, _TRUE, FN, FOR,
-        WHILE, NIL, PRINT, RETURN, SUPER, THIS, VAR, LAMBDA,
+        WHILE, NIL, PRINT, RETURN, SUPER, THIS, VAR, LAMBDA, BREAK,
 
         _EOF
     };
@@ -33,6 +33,6 @@ struct Token
 std::ostream& operator<<(std::ostream& os, const Token& token);
 std::ostream& operator<<(std::ostream& os, const Token::TokenType type);
 
-#endif
+#endif // BIS_TYPES_TOKEN_HPP
 
 

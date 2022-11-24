@@ -35,4 +35,4 @@ private:
     void identifier();
 };
 
-#endif
+#endif // BIS_LEXER__HPP
