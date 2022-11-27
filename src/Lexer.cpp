@@ -94,7 +94,7 @@ void Lexer::identifier()
         advance();
     }
 
-    const std::string text{source.substr(start, current - start)};
+    const std::string text = source.substr(start, current - start);
     addToken(keywords.contains(text) ? keywords.at(text) : TokenType::IDENTIFIER);
 }
 

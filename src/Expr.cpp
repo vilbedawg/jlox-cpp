@@ -59,7 +59,7 @@ std::any DecrementExpr::accept(ExprVisitor<std::any>& visitor) const
 CallExpr::CallExpr(unique_expr_ptr callee, const Token& paren, std::vector<unique_expr_ptr> args)
     : callee{std::move(callee)}, paren{paren}, args{std::move(args)}
 {
-    assert(paren.type == Token::TokenType::RIGHT_PAREN);
+    assert(paren.type == TokenType::RIGHT_PAREN);
 }
 
 std::any CallExpr::accept(ExprVisitor<std::any>& visitor) const
@@ -111,7 +111,7 @@ LogicalExpr::LogicalExpr(unique_expr_ptr left, const Token& op, unique_expr_ptr 
 {
     assert(this->left != nullptr);
     assert(this->right != nullptr);
-    assert(this->op.type == Token::TokenType::AND || this->op.type == Token::TokenType::OR);
+    assert(this->op.type == TokenType::AND || this->op.type == TokenType::OR);
 }
 
 std::any LogicalExpr::accept(ExprVisitor<std::any>& visitor) const
@@ -130,7 +130,7 @@ std::any SuperExpr::accept(ExprVisitor<std::any>& visitor) const
 
 ThisExpr::ThisExpr(const Token& keyword) : keyword{keyword}
 {
-    assert(this->keyword.type == Token::TokenType::THIS);
+    assert(this->keyword.type == TokenType::THIS);
 }
 
 std::any ThisExpr::accept(ExprVisitor<std::any>& visitor) const

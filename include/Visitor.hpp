@@ -18,7 +18,8 @@ struct ListExpr;
 struct IncrementExpr;
 struct DecrementExpr;
 
-template <typename T> struct ExprVisitor
+template <typename T>
+struct ExprVisitor
 {
     virtual T visit(const AssignExpr& expr) = 0;
     virtual T visit(const BinaryExpr& expr) = 0;
@@ -57,7 +58,8 @@ struct WhileStmt;
 struct ForStmt;
 struct VarExpr;
 
-template <typename T> struct StmtVisitor
+template <typename T>
+struct StmtVisitor
 {
     virtual T visit(const BlockStmt& stmt) = 0;
     virtual T visit(const ClassStmt& stmt) = 0;

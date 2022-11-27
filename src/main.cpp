@@ -1,5 +1,7 @@
 #include "../include/Lexer.hpp"
 #include "../include/Logger.hpp"
+#include "../include/Parser.hpp"
+
 #include <fstream>
 
 std::string readFile(std::string_view filename)
@@ -21,17 +23,19 @@ std::string readFile(std::string_view filename)
 
 void run(std::string_view source)
 {
-    Lexer lexer{source};
-    std::vector<Token> tokens{lexer.scanTokens()};
-    for (const auto& token : tokens)
+    Lexer lexer = source;
+    std::vector<Token> tokens = lexer.scanTokens();
+    Parser parser = tokens;
+    auto expressions = parser.parse();
+    if (Error::hadError)
     {
-        std::cout << token << '\n';
+        return;
     }
 }
 
 void initFile(std::string_view filename)
 {
-    std::string file_contents{readFile(filename)};
+    std::string file_contents = readFile(filename);
     run(file_contents);
     if (Error::hadError)
     {

@@ -3,14 +3,12 @@
 #include <iostream>
 #include <map>
 
-using TokenType = Token::TokenType;
-
 Token::Token(const TokenType type, const std::string lexeme, const unsigned int line)
     : type{type}, lexeme{std::move(lexeme)}, line{line}
 {
 }
 
-std::ostream& operator<<(std::ostream& os, const Token::TokenType type)
+std::ostream& operator<<(std::ostream& os, const TokenType type)
 {
     static const std::map<TokenType, std::string> type_map{
         {TokenType::LEFT_PAREN, "LEFT_PAREN"},

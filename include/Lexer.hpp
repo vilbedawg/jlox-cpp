@@ -4,7 +4,6 @@
 #include "../include/Token.hpp"
 #include <unordered_map>
 #include <vector>
-using TokenType = Token::TokenType;
 class Lexer
 {
 public:
