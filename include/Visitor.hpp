@@ -41,7 +41,7 @@ template <typename T> struct ExprVisitor
 struct Expr
 {
     virtual ~Expr() = default;
-    virtual std::any accept(ExprVisitor<std::any>& visitor) const = 0; // Maybe use templates?
+    virtual std::any accept(ExprVisitor<std::any>& visitor) const = 0;
 };
 
 struct BlockStmt;
