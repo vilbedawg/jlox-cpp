@@ -14,7 +14,7 @@ ClassStmt::ClassStmt(const Token& identifier, std::vector<std::unique_ptr<FnStmt
                      std::unique_ptr<VarExpr> superclass)
     : identifier{identifier}, methods{std::move(methods)}, superclass{std::move(superclass)}
 {
-    assert(this->identifier.m_type == Token::TokenType::IDENTIFIER);
+    assert(this->identifier.type == Token::TokenType::IDENTIFIER);
 }
 
 std::any ClassStmt::accept(StmtVisitor<std::any>& visitor) const
@@ -36,7 +36,7 @@ FnStmt::FnStmt(const Token& identifier, std::vector<Token> params,
                std::vector<unique_stmt_ptr> body)
     : identifier{identifier}, params{std::move(params)}, body{std::move(body)}
 {
-    assert(this->identifier.m_type == Token::TokenType::IDENTIFIER);
+    assert(this->identifier.type == Token::TokenType::IDENTIFIER);
 }
 
 std::any FnStmt::accept(StmtVisitor<std::any>& visitor) const
@@ -76,7 +76,7 @@ std::any PrintStmt::accept(StmtVisitor<std::any>& visitor) const
 ReturnStmt::ReturnStmt(const Token& keyword, unique_expr_ptr expr)
     : keyword{keyword}, expression{std::move(expr)}
 {
-    assert(keyword.m_type == Token::TokenType::RETURN);
+    assert(keyword.type == Token::TokenType::RETURN);
 }
 
 std::any ReturnStmt::accept(StmtVisitor<std::any>& visitor) const
@@ -86,7 +86,7 @@ std::any ReturnStmt::accept(StmtVisitor<std::any>& visitor) const
 
 BreakStmt::BreakStmt(const Token& keyword) : keyword{keyword}
 {
-    assert(this->keyword.m_type == Token::TokenType::BREAK);
+    assert(this->keyword.type == Token::TokenType::BREAK);
 }
 
 std::any BreakStmt::accept(StmtVisitor<std::any>& visitor) const
@@ -97,7 +97,7 @@ std::any BreakStmt::accept(StmtVisitor<std::any>& visitor) const
 VarStmt::VarStmt(const Token& identifier, unique_expr_ptr initializer)
     : identifier{identifier}, initializer{std::move(initializer)}
 {
-    assert(this->identifier.m_type == Token::TokenType::IDENTIFIER);
+    assert(this->identifier.type == Token::TokenType::IDENTIFIER);
 }
 
 std::any VarStmt::accept(StmtVisitor<std::any>& visitor) const

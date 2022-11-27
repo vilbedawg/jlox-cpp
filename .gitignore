@@ -41,4 +41,3 @@
 /Bis Interpreter/x64/Debug
 .vscode
 /src/main
-tools/GenerateAst.py

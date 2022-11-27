@@ -25,9 +25,9 @@ struct Token
     };
 
     Token(const TokenType type, const std::string lexeme, const unsigned int line);
-    const TokenType m_type;
-    const std::string m_lexeme;
-    const unsigned int m_line;
+    const TokenType type;
+    const std::string lexeme;
+    const unsigned int line;
 };
 
 std::ostream& operator<<(std::ostream& os, const Token& token);

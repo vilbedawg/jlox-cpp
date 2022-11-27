@@ -6,7 +6,7 @@
 using TokenType = Token::TokenType;
 
 Token::Token(const TokenType type, const std::string lexeme, const unsigned int line)
-    : m_type{type}, m_lexeme{std::move(lexeme)}, m_line{line}
+    : type{type}, lexeme{std::move(lexeme)}, line{line}
 {
 }
 
@@ -66,6 +66,6 @@ std::ostream& operator<<(std::ostream& os, const Token::TokenType type)
 
 std::ostream& operator<<(std::ostream& os, const Token& token)
 {
-    os << token.m_type << ' ' << token.m_lexeme;
+    os << token.type << ' ' << token.lexeme;
     return os;
 }

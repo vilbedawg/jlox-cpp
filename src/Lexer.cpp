@@ -9,7 +9,7 @@ const std::unordered_map<std::string, TokenType> Lexer::keywords{
     {"return", TokenType::RETURN}, {"super", TokenType::SUPER},   {"this", TokenType::THIS},
     {"token", TokenType::VAR},     {"lambda", TokenType::LAMBDA}, {"break", TokenType::BREAK}};
 
-Lexer ::Lexer(std ::string_view source) : start{0}, current{0}, line{1}, m_source{source}
+Lexer ::Lexer(std ::string_view source) : start{0}, current{0}, line{1}, source{source}
 {
 }
 
@@ -20,8 +20,8 @@ std::vector<Token>& Lexer::scanTokens()
         start = current;
         scanToken();
     }
-    m_tokens.emplace_back(Token(TokenType::_EOF, "", line));
-    return m_tokens;
+    tokens.emplace_back(Token(TokenType::_EOF, "", line));
+    return tokens;
 }
 
 void Lexer::scanToken()
@@ -30,11 +30,6 @@ void Lexer::scanToken()
     advance();
     switch (c)
     {
-    // ignore whitespace.
-    case ' ':
-    case '\r':
-    case '\t': break;
-    case '\n': line++; break;
 
     // 1 character lexemes.
     case '(': addToken(TokenType::LEFT_PAREN); break;
@@ -68,6 +63,12 @@ void Lexer::scanToken()
             addToken(TokenType::SLASH);
         }
 
+    // ignore whitespace.
+    case ' ':
+    case '\r':
+    case '\t': break;
+    case '\n': line++; break;
+
     // Literals.
     case '"': string(); break;
     default:
@@ -93,7 +94,7 @@ void Lexer::identifier()
         advance();
     }
 
-    const std::string text{m_source.substr(start, current - start)};
+    const std::string text{source.substr(start, current - start)};
     addToken(keywords.contains(text) ? keywords.at(text) : TokenType::IDENTIFIER);
 }
 
@@ -143,7 +144,7 @@ void Lexer::string()
 
 bool Lexer::match(const char expected)
 {
-    if (isEOF() || m_source.at(current) != expected)
+    if (isEOF() || source.at(current) != expected)
     {
         return false;
     }
@@ -154,12 +155,12 @@ bool Lexer::match(const char expected)
 
 char Lexer::peek() const
 {
-    return isEOF() ? '\0' : m_source.at(current);
+    return isEOF() ? '\0' : source.at(current);
 }
 
 char Lexer::peekNext() const
 {
-    return (current + 1 >= m_source.length()) ? '\0' : m_source.at(current + 1);
+    return (current + 1 >= source.length()) ? '\0' : source.at(current + 1);
 }
 
 bool Lexer::isAlpha(const char c) const
@@ -179,7 +180,7 @@ bool Lexer::isDigit(const char c) const
 
 bool Lexer::isEOF() const
 {
-    return current >= m_source.size();
+    return current >= source.size();
 }
 
 void Lexer::advance()
@@ -189,11 +190,11 @@ void Lexer::advance()
 
 std::string Lexer::getLexeme(TokenType type) const
 {
-    return (type == TokenType::STRING) ? m_source.substr(start + 1, current - start - 2)
-                                       : m_source.substr(start, current - start);
+    return (type == TokenType::STRING) ? source.substr(start + 1, current - start - 2)
+                                       : source.substr(start, current - start);
 }
 
 void Lexer::addToken(const TokenType type)
 {
-    m_tokens.emplace_back(type, std::move(getLexeme(type)), line);
+    tokens.emplace_back(type, std::move(getLexeme(type)), line);
 }

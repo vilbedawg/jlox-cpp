@@ -12,8 +12,8 @@ public:
     std::vector<Token>& scanTokens();
 
 private:
-    const std::string m_source;
-    std::vector<Token> m_tokens;
+    const std::string source;
+    std::vector<Token> tokens;
     unsigned int start, current, line;
     static const std::unordered_map<std::string, TokenType> keywords;
 
