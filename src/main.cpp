@@ -1,3 +1,4 @@
+#include "../include/AstPrinter.hpp"
 #include "../include/Lexer.hpp"
 #include "../include/Logger.hpp"
 #include "../include/Parser.hpp"
@@ -24,13 +25,15 @@ std::string readFile(std::string_view filename)
 void run(std::string_view source)
 {
     Lexer lexer = source;
-    std::vector<Token> tokens = lexer.scanTokens();
-    Parser parser = tokens;
+    Parser parser = lexer.scanTokens();
     auto expressions = parser.parse();
     if (Error::hadError)
     {
         return;
     }
+
+    AstPrinter printer;
+    std::cout << printer.print(expressions);
 }
 
 void initFile(std::string_view filename)

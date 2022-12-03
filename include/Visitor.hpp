@@ -36,7 +36,7 @@ struct ExprVisitor
     virtual T visit(const ListExpr& expr) = 0;
     virtual T visit(const IncrementExpr& expr) = 0;
     virtual T visit(const DecrementExpr& expr) = 0;
-    ~ExprVisitor() = default;
+    virtual ~ExprVisitor() = default;
 };
 
 struct Expr
@@ -72,7 +72,7 @@ struct StmtVisitor
     virtual T visit(const VarStmt& stmt) = 0;
     virtual T visit(const WhileStmt& stmt) = 0;
     virtual T visit(const ForStmt& stmt) = 0;
-    ~StmtVisitor() = default;
+    virtual ~StmtVisitor() = default;
 };
 
 struct Stmt
