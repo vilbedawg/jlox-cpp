@@ -28,9 +28,7 @@ void run(std::string_view source)
     Parser parser = lexer.scanTokens();
     auto expressions = parser.parse();
     if (Error::hadError)
-    {
         return;
-    }
 
     AstPrinter printer;
     std::cout << printer.print(expressions);

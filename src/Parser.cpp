@@ -27,12 +27,13 @@ std::vector<unique_expr_ptr> Parser::parse()
         {
             expressions.emplace_back(expression());
         }
-        return expressions;
     }
     catch (const std::exception& e)
     {
         std::cerr << e.what() << '\n';
     }
+
+    return expressions;
 }
 
 /**
