@@ -1,4 +1,5 @@
 #include "../include/AstPrinter.hpp"
+#include "../include/Interpreter.hpp"
 #include "../include/Lexer.hpp"
 #include "../include/Logger.hpp"
 #include "../include/Parser.hpp"
@@ -26,12 +27,22 @@ void run(std::string_view source)
 {
     Lexer lexer = source;
     Parser parser = lexer.scanTokens();
+    Interpreter interpreter;
     auto expressions = parser.parse();
-    if (Error::hadError)
-        return;
 
-    AstPrinter printer;
-    std::cout << printer.print(expressions);
+    for (auto& expr : expressions)
+    {
+        interpreter.interpret(std::move(expr));
+    }
+
+    if (Error::hadError || Error::hadRuntimeError)
+    {
+        Error::report();
+        return;
+    }
+
+    // AstPrinter printer;
+    // std::cout << printer.print(expressions);
 }
 
 void initFile(std::string_view filename)
@@ -41,6 +52,10 @@ void initFile(std::string_view filename)
     if (Error::hadError)
     {
         std::exit(65);
+    }
+    if (Error::hadRuntimeError)
+    {
+        std::exit(70);
     }
 }
 
@@ -59,6 +74,10 @@ void runPrompt()
         if (Error::hadError)
         {
             std::exit(65);
+        }
+        if (Error::hadRuntimeError)
+        {
+            std::exit(70);
         }
     }
 }

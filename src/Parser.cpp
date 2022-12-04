@@ -334,7 +334,7 @@ Token Parser::previous() const
 
 Parser::ParseError Parser::error(const Token& token, std::string msg) const
 {
-    Error::add(token, std::move(msg));
+    Error::addError(token, std::move(msg));
     return ParseError();
 }
 

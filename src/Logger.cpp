@@ -5,14 +5,19 @@ namespace Error
     std::vector<ErrorInfo> exceptionList{};
     bool hadError = false;
     bool hadRuntimeError = false;
+    void addRuntimeError(const RuntimeError& error) noexcept
+    {
+        exceptionList.push_back({error.getToken().line, "", error.what()});
+        hadRuntimeError = true;
+    }
 
-    void add(const unsigned int line, std::string where, std::string message) noexcept
+    void addError(const unsigned int line, std::string where, std::string message) noexcept
     {
         exceptionList.push_back({line, std::move(where), std::move(message)});
         hadError = true;
     }
 
-    void add(const Token& token, std::string message) noexcept
+    void addError(const Token& token, std::string message) noexcept
     {
         if (token.type == TokenType::_EOF)
         {
@@ -30,14 +35,10 @@ namespace Error
     {
         for (const auto& exception : exceptionList)
         {
-            std::cout << "[Line " + std::to_string(exception.line) + "] Error " + exception.where +
+            std::cerr << "[Line " + std::to_string(exception.line) + "] Error " + exception.where +
+
                              ": " + exception.message
                       << '\n';
         }
-    }
-
-    void clear() noexcept
-    {
-        exceptionList.clear();
     }
 };

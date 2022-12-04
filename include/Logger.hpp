@@ -1,11 +1,11 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
+#include "RuntimeError.hpp"
 #include "Token.hpp"
-
 #include <iostream>
-#include <string>
 #include <vector>
+
 namespace Error
 {
     struct ErrorInfo
@@ -19,10 +19,12 @@ namespace Error
         {
         }
     };
+
     void report() noexcept;
-    void add(const unsigned int line, const std::string where, const std::string message) noexcept;
-    void add(const Token& token, std::string message) noexcept;
-    void clear() noexcept;
+    void addRuntimeError(const RuntimeError& error) noexcept;
+    void addError(const unsigned int line, const std::string where,
+                  const std::string message) noexcept;
+    void addError(const Token& token, std::string message) noexcept;
     extern bool hadError;
     extern bool hadRuntimeError;
     extern std::vector<ErrorInfo> exceptionList;
