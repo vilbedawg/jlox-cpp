@@ -92,6 +92,10 @@ std::any Interpreter::visit(const BinaryExpr& expr)
         return left - right;
     case TokenType::SLASH:
         checkNumberOperands(expr.op, left, right);
+        if (std::any_cast<double>(right) == 0)
+        {
+            throw RuntimeError(expr.op, "Division by 0.");
+        }
         return left / right;
     case TokenType::STAR:
         checkNumberOperands(expr.op, left, right);
