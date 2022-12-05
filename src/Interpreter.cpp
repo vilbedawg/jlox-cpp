@@ -221,7 +221,7 @@ double operator-(const std::any& operand)
 
 double operator-(const std::any& lhs, const std::any& rhs)
 {
-    return std::any_cast<double>(lhs) - std::any_cast<double>(lhs);
+    return std::any_cast<double>(lhs) - std::any_cast<double>(rhs);
 }
 
 std::any operator+(const std::any& lhs, const std::any& rhs)
