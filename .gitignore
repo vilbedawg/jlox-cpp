@@ -42,3 +42,4 @@
 .vscode
 /src/main
 /build
+/googletest
