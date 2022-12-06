@@ -97,7 +97,7 @@ struct GroupingExpr : Expr
 {
     unique_expr_ptr expression;
 
-    GroupingExpr(unique_expr_ptr expression);
+    explicit GroupingExpr(unique_expr_ptr expression);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -105,7 +105,7 @@ struct LiteralExpr : Expr
 {
     std::any literal;
 
-    LiteralExpr(std::any literal);
+    explicit LiteralExpr(std::any literal);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -132,7 +132,7 @@ struct ThisExpr : Expr
 {
     Token keyword;
 
-    ThisExpr(const Token& keyword);
+    explicit ThisExpr(const Token& keyword);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -140,7 +140,7 @@ struct VarExpr : Expr
 {
     Token identifier;
 
-    VarExpr(const Token& identifier);
+    explicit VarExpr(const Token& identifier);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 

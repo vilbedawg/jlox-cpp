@@ -56,7 +56,6 @@ struct BreakStmt;
 struct VarStmt;
 struct WhileStmt;
 struct ForStmt;
-struct VarExpr;
 
 template <typename T>
 struct StmtVisitor

@@ -5,7 +5,7 @@
 
 struct Token
 {
-    Token(const TokenType type, const std::string lexeme, const unsigned int line);
+    Token(const TokenType type, std::string&& lexeme, const unsigned int line);
     const TokenType type;
     const std::string lexeme;
     const unsigned int line;

@@ -9,8 +9,8 @@ private:
     Token token;
 
 public:
-    RuntimeError(const Token& token, std::string message)
-        : std::runtime_error{std::move(message)}, token{token}
+    RuntimeError(const Token& token, const std::string& message)
+        : std::runtime_error{message}, token{token}
     {
     }
 

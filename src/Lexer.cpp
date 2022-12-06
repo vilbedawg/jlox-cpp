@@ -1,7 +1,7 @@
 #include "../include/Lexer.hpp"
 #include "../include/Logger.hpp"
 
-const std::unordered_map<std::string, TokenType> Lexer::keywords{
+const std::unordered_map<std::string_view, TokenType> Lexer::keywords{
     {"and", TokenType::AND},       {"or", TokenType::OR},         {"class", TokenType::CLASS},
     {"if", TokenType::IF},         {"else", TokenType::ELSE},     {"false", TokenType::_FALSE},
     {"true", TokenType::_TRUE},    {"fn", TokenType::FN},         {"for", TokenType::FOR},
@@ -9,7 +9,7 @@ const std::unordered_map<std::string, TokenType> Lexer::keywords{
     {"return", TokenType::RETURN}, {"super", TokenType::SUPER},   {"this", TokenType::THIS},
     {"var", TokenType::VAR},       {"lambda", TokenType::LAMBDA}, {"break", TokenType::BREAK}};
 
-Lexer ::Lexer(std ::string_view source) : start{0}, current{0}, line{1}, source{source}
+Lexer::Lexer(std ::string_view source) : source{source}
 {
 }
 
@@ -20,7 +20,7 @@ std::vector<Token>& Lexer::scanTokens()
         start = current;
         scanToken();
     }
-    tokens.emplace_back(Token(TokenType::_EOF, "", line));
+    tokens.emplace_back(TokenType::_EOF, "", line);
     return tokens;
 }
 
@@ -28,59 +28,59 @@ void Lexer::scanToken()
 {
     char c = peek();
     advance();
+    using enum TokenType;
     switch (c)
     {
-
     // 1 character lexemes.
     case '(':
-        addToken(TokenType::LEFT_PAREN);
+        addToken(LEFT_PAREN);
         break;
     case ')':
-        addToken(TokenType::RIGHT_PAREN);
+        addToken(RIGHT_PAREN);
         break;
     case '{':
-        addToken(TokenType::LEFT_BRACE);
+        addToken(LEFT_BRACE);
         break;
     case '}':
-        addToken(TokenType::RIGHT_BRACE);
+        addToken(RIGHT_BRACE);
         break;
     case '[':
-        addToken(TokenType::LEFT_BRACKET);
+        addToken(LEFT_BRACKET);
         break;
     case ']':
-        addToken(TokenType::RIGHT_BRACKET);
+        addToken(RIGHT_BRACKET);
         break;
     case ',':
-        addToken(TokenType::COMMA);
+        addToken(COMMA);
         break;
     case '.':
-        addToken(TokenType::DOT);
+        addToken(DOT);
         break;
     case ';':
-        addToken(TokenType::SEMICOLON);
+        addToken(SEMICOLON);
         break;
     case '*':
-        addToken(TokenType::STAR);
+        addToken(STAR);
         break;
 
     // > 1 character lexemes.
     case '!':
-        addToken(match('=') ? TokenType::EXCLAMATION_EQUAL : TokenType::EXCLAMATION);
+        addToken(match('=') ? EXCLAMATION_EQUAL : EXCLAMATION);
         break;
     case '=':
-        addToken(match('=') ? TokenType::EQUAL_EQUAL : TokenType::EQUAL);
+        addToken(match('=') ? EQUAL_EQUAL : EQUAL);
         break;
     case '-':
-        addToken(match('-') ? TokenType::MINUS_MINUS : TokenType::MINUS);
+        addToken(match('-') ? MINUS_MINUS : MINUS);
         break;
     case '+':
-        addToken(match('+') ? TokenType::PLUS_PLUS : TokenType::PLUS);
+        addToken(match('+') ? PLUS_PLUS : PLUS);
         break;
     case '<':
-        addToken(match('=') ? TokenType::LESS_EQUAL : TokenType::LESS);
+        addToken(match('=') ? LESS_EQUAL : LESS);
         break;
     case '>':
-        addToken(match('=') ? TokenType::GREATER_EQUAL : TokenType::GREATER);
+        addToken(match('=') ? GREATER_EQUAL : GREATER);
         break;
     case '/':
         if (match('/'))
@@ -92,7 +92,7 @@ void Lexer::scanToken()
         }
         else
         {
-            addToken(TokenType::SLASH);
+            addToken(SLASH);
         }
 
     // ignore whitespace.

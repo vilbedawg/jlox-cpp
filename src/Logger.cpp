@@ -7,13 +7,13 @@ namespace Error
     bool hadRuntimeError = false;
     void addRuntimeError(const RuntimeError& error) noexcept
     {
-        exceptionList.push_back({error.getToken().line, "", error.what()});
+        exceptionList.emplace_back(error.getToken().line, "", error.what());
         hadRuntimeError = true;
     }
 
     void addError(const unsigned int line, std::string where, std::string message) noexcept
     {
-        exceptionList.push_back({line, std::move(where), std::move(message)});
+        exceptionList.emplace_back(line, std::move(where), std::move(message));
         hadError = true;
     }
 
@@ -21,11 +21,11 @@ namespace Error
     {
         if (token.type == TokenType::_EOF)
         {
-            exceptionList.push_back({token.line, "at end", std::move(message)});
+            exceptionList.emplace_back(token.line, "at end", std::move(message));
         }
         else
         {
-            exceptionList.push_back({token.line, "at '" + token.lexeme + "'", std::move(message)});
+            exceptionList.emplace_back(token.line, "at '" + token.lexeme + "'", std::move(message));
         }
 
         hadError = true;

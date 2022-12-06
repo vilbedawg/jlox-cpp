@@ -35,7 +35,7 @@ std::any UnaryExpr::accept(ExprVisitor<std::any>& visitor) const
 }
 
 IncrementExpr::IncrementExpr(std::unique_ptr<VarExpr> variable, Type type)
-    : variable{std::move(variable)}, type{type}
+    : type{type}, variable{std::move(variable)}
 {
     assert(this->variable != nullptr);
 }
@@ -46,7 +46,7 @@ std::any IncrementExpr::accept(ExprVisitor<std::any>& visitor) const
 }
 
 DecrementExpr::DecrementExpr(std::unique_ptr<VarExpr> variable, Type type)
-    : variable{std::move(variable)}, type{type}
+    : type{type}, variable{std::move(variable)}
 {
     assert(this->variable != nullptr);
 }

@@ -12,7 +12,7 @@ std::any BlockStmt::accept(StmtVisitor<std::any>& visitor) const
 
 ClassStmt::ClassStmt(const Token& identifier, std::vector<std::unique_ptr<FnStmt>> methods,
                      std::unique_ptr<VarExpr> superclass)
-    : identifier{identifier}, methods{std::move(methods)}, superclass{std::move(superclass)}
+    : identifier{identifier}, superclass{std::move(superclass)}, methods{std::move(methods)}
 {
     assert(this->identifier.type == TokenType::IDENTIFIER);
 }
@@ -119,8 +119,8 @@ std::any WhileStmt::accept(StmtVisitor<std::any>& visitor) const
 
 ForStmt::ForStmt(unique_stmt_ptr initializer, unique_expr_ptr condition, unique_stmt_ptr increment,
                  unique_stmt_ptr body)
-    : initializer{std::move(initializer)}, condition{std::move(condition)},
-      increment{std::move(increment)}, body{std::move(body)}
+    : initializer{std::move(initializer)}, body{std::move(body)},
+      increment{std::move(increment)}, condition{std::move(condition)}
 {
     assert(this->initializer != nullptr);
     assert(this->condition != nullptr);

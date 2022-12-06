@@ -11,7 +11,7 @@ struct BlockStmt : Stmt
 {
     std::vector<unique_stmt_ptr> statements;
 
-    BlockStmt(std::vector<unique_stmt_ptr> statements);
+    explicit BlockStmt(std::vector<unique_stmt_ptr> statements);
     std::any accept(StmtVisitor<std::any>& visitor) const override;
 };
 
@@ -30,7 +30,7 @@ struct ExprStmt : Stmt
 {
     unique_expr_ptr expression;
 
-    ExprStmt(unique_expr_ptr expr);
+    explicit ExprStmt(unique_expr_ptr expr);
     std::any accept(StmtVisitor<std::any>& visitor) const override;
 };
 
@@ -107,8 +107,10 @@ struct WhileStmt : Stmt
 
 struct ForStmt : Stmt
 {
-    unique_stmt_ptr initializer, body, increment; // OPTIONAL
-    unique_expr_ptr condition;                    // OPTIONAL
+    unique_stmt_ptr initializer;
+    unique_stmt_ptr body;
+    unique_stmt_ptr increment; // OPTIONAL
+    unique_expr_ptr condition; // OPTIONAL
 
     ForStmt(unique_stmt_ptr initializer, unique_expr_ptr condition, unique_stmt_ptr increment,
             unique_stmt_ptr body);

@@ -16,7 +16,7 @@ TEST(LexerTests, BASIC)
 {
     const auto test_script = R"(print "Hello, world" 123)";
     Lexer lexer{test_script};
-    const auto tokens = lexer.scanTokens();
+    const auto& tokens = lexer.scanTokens();
     std::vector<Token> expected_tokens{
         {TokenType::PRINT, "print", 1},
         {TokenType::STRING, "Hello, world", 1},
@@ -33,7 +33,7 @@ TEST(LexerTests, KEYWORDS)
         "and", "if",    "true",   "while", "return", "var", "or",    "else", "fn",
         "nil", "super", "lambda", "class", "false",  "for", "print", "this", "break",
     };
-    const std::unordered_map<std::string, TokenType> tokentypes{
+    const std::unordered_map<std::string_view, TokenType> tokentypes{
         {"and", TokenType::AND},       {"or", TokenType::OR},         {"class", TokenType::CLASS},
         {"if", TokenType::IF},         {"else", TokenType::ELSE},     {"false", TokenType::_FALSE},
         {"true", TokenType::_TRUE},    {"fn", TokenType::FN},         {"for", TokenType::FOR},
@@ -52,7 +52,7 @@ TEST(LexerTests, KEYWORDS)
     std::vector<Token> expected_tokens;
     for (auto& lexeme : keywords)
     {
-        expected_tokens.emplace_back(Token{tokentypes.at(lexeme), lexeme, 1});
+        expected_tokens.emplace_back(tokentypes.at(lexeme), lexeme, 1);
     }
 
     tokens.pop_back(); // remove EOF token
@@ -64,7 +64,7 @@ TEST(LexerTests, COMMENT)
     const auto test_script = R"(// this is a comment 
         print "Hello world!" // this one is a comment as well)";
     Lexer lexer{test_script};
-    const auto tokens = lexer.scanTokens();
+    const auto& tokens = lexer.scanTokens();
     std::vector<Token> expected_tokens{
         {TokenType::PRINT, "print", 2},
         {TokenType::STRING, "Hello world!", 2},
@@ -90,7 +90,7 @@ TEST(LexerTests, EXPRESSION)
     )";
 
     Lexer lexer{test_script};
-    const auto tokens = lexer.scanTokens();
+    const auto& tokens = lexer.scanTokens();
     /* clang-format off */
     std::vector<Token> expected_tokens{
         {TokenType::NUMBER, "1", 2},   
