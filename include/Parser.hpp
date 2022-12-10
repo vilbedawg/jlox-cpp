@@ -50,9 +50,9 @@ private:
     bool check(TokenType type);
     bool isAtEnd();
     void synchronize();
+    void advance();
 
     Token& consume(TokenType type, std::string msg);
-    Token& advance();
     Token& peek();
     Token& previous();
 

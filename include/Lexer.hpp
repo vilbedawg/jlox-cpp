@@ -16,7 +16,7 @@ private:
     unsigned int start = 0;
     unsigned int current = 0;
     unsigned int line = 1;
-    static const std::unordered_map<std::string_view, TokenType> keywords;
+    static const std::unordered_map<std::string, TokenType> keywords;
 
     bool isEOF() const;
     bool isDigit(const char c) const;

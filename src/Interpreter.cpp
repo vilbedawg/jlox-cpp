@@ -1,7 +1,6 @@
 #include "../include/Interpreter.hpp"
 #include "../include/Logger.hpp"
 
-
 void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
 {
     try
@@ -276,7 +275,9 @@ std::any Interpreter::visit(const LiteralExpr& expr)
 
 std::any Interpreter::visit(const AssignExpr& expr)
 {
-    return std::any{};
+    auto value = evaluate(*expr.value);
+    environment.assign(expr.identifier, value);
+    return value;
 }
 
 std::any Interpreter::visit(const CallExpr& expr)

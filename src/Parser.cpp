@@ -76,10 +76,27 @@ unique_stmt_ptr Parser::expressionStatement()
     return std::make_unique<ExprStmt>(std::move(expr));
 }
 
+unique_expr_ptr Parser::assignment()
+{
+    auto expr = equality();
+    if (match(TokenType::EQUAL))
+    {
+        if (dynamic_cast<VarExpr*>(expr.get()))
+        {
+            auto value = assignment();
+            auto identifier{static_cast<VarExpr*>(expr.release())->identifier};
+            return std::make_unique<AssignExpr>(identifier, std::move(value));
+        }
+        Error::addError(previous(), "Invalid assignment target.");
+    }
+
+    return expr;
+}
+
 unique_expr_ptr Parser::expression()
 {
-    // expression -> equality ;
-    return equality();
+    // expression -> assignment ;
+    return assignment();
 }
 
 unique_expr_ptr Parser::equality()
@@ -88,7 +105,7 @@ unique_expr_ptr Parser::equality()
     auto expr = comparison();
     while (match(TokenType::EXCLAMATION_EQUAL, TokenType::EQUAL_EQUAL))
     {
-        auto _operator = previous();
+        const auto& _operator = previous();
         auto right = comparison();
         expr = std::make_unique<BinaryExpr>(std::move(expr), _operator, std::move(right));
     }
@@ -104,7 +121,7 @@ unique_expr_ptr Parser::comparison()
     while (
         match(TokenType::GREATER, TokenType::GREATER_EQUAL, TokenType::LESS, TokenType::LESS_EQUAL))
     {
-        auto _operator = previous();
+        const auto& _operator = previous();
         auto right = term();
         expr = std::make_unique<BinaryExpr>(std::move(expr), _operator, std::move(right));
     }
@@ -119,7 +136,7 @@ unique_expr_ptr Parser::term()
 
     while (match(TokenType::MINUS, TokenType::PLUS))
     {
-        auto _operator = previous();
+        const auto& _operator = previous();
         auto right = factor();
         expr = std::make_unique<BinaryExpr>(std::move(expr), _operator, std::move(right));
     }
@@ -134,7 +151,7 @@ unique_expr_ptr Parser::factor()
 
     while (match(TokenType::SLASH, TokenType::STAR))
     {
-        auto _operator = previous();
+        const auto& _operator = previous();
         auto right = unary();
         expr = std::make_unique<BinaryExpr>(std::move(expr), _operator, std::move(right));
     }
@@ -147,7 +164,7 @@ unique_expr_ptr Parser::unary()
     // unary -> ( "!" | "-" ) unary | prefix ;
     if (match(TokenType::EXCLAMATION, TokenType::MINUS))
     {
-        auto _operator = previous();
+        const auto& _operator = previous();
         auto right = unary();
         return std::make_unique<UnaryExpr>(_operator, std::move(right));
     }
@@ -160,7 +177,7 @@ unique_expr_ptr Parser::prefix()
     // prefix -> ( "++" | "--" ) prefix | lvalue | postfix;
     if (match(TokenType::PLUS_PLUS, TokenType::MINUS_MINUS))
     {
-        auto _operator = previous();
+        const auto& _operator = previous();
         auto right = prefix();
         if (dynamic_cast<IncrementExpr*>(right.get()) || dynamic_cast<DecrementExpr*>(right.get()))
         {
@@ -194,26 +211,25 @@ unique_expr_ptr Parser::postfix()
     // postfix -> call ( ( "++" | "--" ) lvalue );
     auto expr = call();
 
-    if (match(TokenType::PLUS_PLUS, TokenType::MINUS_MINUS))
+    if (!match(TokenType::PLUS_PLUS, TokenType::MINUS_MINUS))
     {
-        Token _operator = previous();
-        if (!dynamic_cast<VarExpr*>(expr.get())) // If lvalue doesnt exist
-        {
-            throw error(_operator,
-                        "Operators '++' and '--' must be applied to and lvalue operand.");
-        }
+        return expr;
+    }
 
-        std::unique_ptr<VarExpr> identifier{static_cast<VarExpr*>(expr.release())};
-        if (_operator.type == TokenType::PLUS_PLUS)
-        {
-            expr = std::make_unique<IncrementExpr>(std::move(identifier),
-                                                   IncrementExpr::Type::POSTFIX);
-        }
-        else
-        {
-            expr = std::make_unique<DecrementExpr>(std::move(identifier),
-                                                   DecrementExpr::Type::POSTFIX);
-        }
+    const auto& _operator = previous();
+    if (!dynamic_cast<VarExpr*>(expr.get())) // If lvalue doesnt exist
+    {
+        throw error(_operator, "Operators '++' and '--' must be applied to and lvalue operand.");
+    }
+
+    std::unique_ptr<VarExpr> identifier{static_cast<VarExpr*>(expr.release())};
+    if (_operator.type == TokenType::PLUS_PLUS)
+    {
+        expr = std::make_unique<IncrementExpr>(std::move(identifier), IncrementExpr::Type::POSTFIX);
+    }
+    else
+    {
+        expr = std::make_unique<DecrementExpr>(std::move(identifier), DecrementExpr::Type::POSTFIX);
     }
 
     if (match(TokenType::PLUS_PLUS, TokenType::MINUS_MINUS))
@@ -311,7 +327,7 @@ bool Parser::match(Args... args)
     bool is_match = std::ranges::any_of(results.begin(), results.end(), [](bool x) { return x; });
     if (is_match)
     {
-        static_cast<void>(advance());
+        advance();
     }
 
     return is_match;
@@ -321,7 +337,8 @@ Token& Parser::consume(TokenType type, std::string msg)
 {
     if (check(type))
     {
-        return advance();
+        advance();
+        return previous();
     }
 
     throw error(peek(), std::move(msg));
@@ -337,14 +354,12 @@ bool Parser::check(TokenType type)
     return peek().type == type;
 }
 
-Token& Parser::advance()
+void Parser::advance()
 {
     if (!isAtEnd())
     {
         current++;
     }
-
-    return previous();
 }
 
 bool Parser::isAtEnd()
@@ -370,8 +385,7 @@ Parser::ParseError Parser::error(const Token& token, std::string msg) const
 
 void Parser::synchronize()
 {
-    static_cast<void>(advance());
-
+    advance();
     while (!isAtEnd())
     {
         using enum TokenType;
@@ -393,7 +407,6 @@ void Parser::synchronize()
         default:
             break;
         }
-
-        static_cast<void>(advance());
+        advance();
     }
 }

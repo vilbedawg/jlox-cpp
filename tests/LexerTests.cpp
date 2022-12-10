@@ -33,7 +33,7 @@ TEST(LexerTests, KEYWORDS)
         "and", "if",    "true",   "while", "return", "var", "or",    "else", "fn",
         "nil", "super", "lambda", "class", "false",  "for", "print", "this", "break",
     };
-    const std::unordered_map<std::string_view, TokenType> tokentypes{
+    const std::unordered_map<std::string, TokenType> tokentypes{
         {"and", TokenType::AND},       {"or", TokenType::OR},         {"class", TokenType::CLASS},
         {"if", TokenType::IF},         {"else", TokenType::ELSE},     {"false", TokenType::_FALSE},
         {"true", TokenType::_TRUE},    {"fn", TokenType::FN},         {"for", TokenType::FOR},

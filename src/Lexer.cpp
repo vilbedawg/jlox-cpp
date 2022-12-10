@@ -1,7 +1,7 @@
 #include "../include/Lexer.hpp"
 #include "../include/Logger.hpp"
 
-const std::unordered_map<std::string_view, TokenType> Lexer::keywords{
+const std::unordered_map<std::string, TokenType> Lexer::keywords{
     {"and", TokenType::AND},       {"or", TokenType::OR},         {"class", TokenType::CLASS},
     {"if", TokenType::IF},         {"else", TokenType::ELSE},     {"false", TokenType::_FALSE},
     {"true", TokenType::_TRUE},    {"fn", TokenType::FN},         {"for", TokenType::FOR},
@@ -202,7 +202,7 @@ char Lexer::peekNext() const
 
 bool Lexer::isAlpha(const char c) const
 {
-    return (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_');
+    return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_'));
 }
 
 bool Lexer::isAlphaNumeric(const char c) const
@@ -233,5 +233,5 @@ std::string Lexer::getLexeme(TokenType type) const
 
 void Lexer::addToken(const TokenType type)
 {
-    tokens.emplace_back(type, std::move(getLexeme(type)), line);
+    tokens.emplace_back(type, getLexeme(type), line);
 }
