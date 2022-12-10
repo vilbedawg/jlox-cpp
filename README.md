@@ -1,5 +1,3 @@
 # BIS Interpreter
+C++ port of the AST-interpreter in Robert Nystrom's Crafting Interpreters book.
 
-This is an implementation of the AST-interpreter built in Robert Nystrom's book "Crafting Interpreters"
-
-Todo
