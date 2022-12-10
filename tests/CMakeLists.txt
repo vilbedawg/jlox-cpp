@@ -13,6 +13,7 @@ add_executable(unit_test)
 target_sources(unit_test
     PRIVATE
         LexerTests.cpp
+        ParserTests.cpp
         main.cpp
 )
 

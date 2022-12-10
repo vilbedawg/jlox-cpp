@@ -57,27 +57,26 @@ struct VarStmt;
 struct WhileStmt;
 struct ForStmt;
 
-template <typename T>
 struct StmtVisitor
 {
-    virtual T visit(const BlockStmt& stmt) = 0;
-    virtual T visit(const ClassStmt& stmt) = 0;
-    virtual T visit(const ExprStmt& stmt) = 0;
-    virtual T visit(const FnStmt& stmt) = 0;
-    virtual T visit(const IfStmt& stmt) = 0;
-    virtual T visit(const PrintStmt& stmt) = 0;
-    virtual T visit(const ReturnStmt& stmt) = 0;
-    virtual T visit(const BreakStmt& stmt) = 0;
-    virtual T visit(const VarStmt& stmt) = 0;
-    virtual T visit(const WhileStmt& stmt) = 0;
-    virtual T visit(const ForStmt& stmt) = 0;
+    virtual void visit(const BlockStmt& stmt) = 0;
+    virtual void visit(const ClassStmt& stmt) = 0;
+    virtual void visit(const ExprStmt& stmt) = 0;
+    virtual void visit(const FnStmt& stmt) = 0;
+    virtual void visit(const IfStmt& stmt) = 0;
+    virtual void visit(const PrintStmt& stmt) = 0;
+    virtual void visit(const ReturnStmt& stmt) = 0;
+    virtual void visit(const BreakStmt& stmt) = 0;
+    virtual void visit(const VarStmt& stmt) = 0;
+    virtual void visit(const WhileStmt& stmt) = 0;
+    virtual void visit(const ForStmt& stmt) = 0;
     virtual ~StmtVisitor() = default;
 };
 
 struct Stmt
 {
     virtual ~Stmt() = default;
-    virtual std::any accept(StmtVisitor<std::any>& visitor) const = 0;
+    virtual void accept(StmtVisitor& visitor) const = 0;
 };
 
 #endif

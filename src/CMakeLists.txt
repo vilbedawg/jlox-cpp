@@ -17,6 +17,7 @@ target_sources(BIS
         Stmt.cpp
         Token.cpp
         Interpreter.cpp
+        Environment.cpp
 )
 
 add_executable(main main.cpp)

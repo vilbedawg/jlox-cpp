@@ -3,6 +3,7 @@
 
 #include "RuntimeError.hpp"
 #include "Token.hpp"
+#include <cassert>
 #include <iostream>
 #include <vector>
 

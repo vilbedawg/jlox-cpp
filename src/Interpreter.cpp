@@ -1,13 +1,16 @@
 #include "../include/Interpreter.hpp"
 #include "../include/Logger.hpp"
-#include <cassert>
 
-void Interpreter::interpret(unique_expr_ptr expr)
+
+void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
 {
     try
     {
-        std::any value = evaluate(*expr);
-        std::cout << stringify(value) << '\n';
+        for (const auto& ptr : statements)
+        {
+            assert(ptr != nullptr);
+            execute(*ptr);
+        }
     }
     catch (const RuntimeError& error)
     {
@@ -15,7 +18,7 @@ void Interpreter::interpret(unique_expr_ptr expr)
     }
 }
 
-std::string Interpreter::stringify(std::any& object)
+std::string Interpreter::stringify(std::any& object) const
 {
     if (!object.has_value())
     {
@@ -41,12 +44,17 @@ std::string Interpreter::stringify(std::any& object)
         return std::any_cast<std::string>(object);
     }
 
-    return std::string();
+    return {};
 }
 
 std::any Interpreter::evaluate(const Expr& expr)
 {
     return expr.accept(*this);
+}
+
+void Interpreter::execute(const Stmt& stmt)
+{
+    stmt.accept(*this);
 }
 
 void Interpreter::checkNumberOperand(const Token& op, const std::any& operand) const
@@ -81,56 +89,158 @@ bool Interpreter::isTruthy(const std::any& object) const
     return true;
 }
 
+bool Interpreter::isEqual(const std::any& lhs, const std::any& rhs) const
+{
+    if (!lhs.has_value() && !rhs.has_value())
+    {
+        return true;
+    }
+    if (!lhs.has_value())
+    {
+        return false;
+    }
+
+    if (lhs.type() != rhs.type())
+    {
+        return false;
+    }
+
+    if (lhs.type() == typeid(bool))
+    {
+        return std::any_cast<bool>(lhs) == std::any_cast<bool>(rhs);
+    }
+
+    if (lhs.type() == typeid(double))
+    {
+        return std::any_cast<double>(lhs) == std::any_cast<double>(rhs);
+    }
+
+    if (lhs.type() == typeid(std::string))
+    {
+        return std::any_cast<std::string>(lhs) == std::any_cast<std::string>(rhs);
+    }
+
+    return false;
+}
+
+void Interpreter::visit(const ExprStmt& stmt)
+{
+    evaluate(*stmt.expression);
+}
+
+void Interpreter::visit(const PrintStmt& stmt)
+{
+    if (stmt.expression.get() == nullptr)
+    {
+        std::cout << '\n';
+        return;
+    }
+
+    auto value = evaluate(*stmt.expression);
+    std::cout << stringify(value) << '\n';
+}
+
+void Interpreter::visit(const BlockStmt& stmt)
+{
+}
+
+void Interpreter::visit(const ClassStmt& stmt)
+{
+}
+
+void Interpreter::visit(const FnStmt& stmt)
+{
+}
+
+void Interpreter::visit(const IfStmt& stmt)
+{
+}
+
+void Interpreter::visit(const ReturnStmt& stmt)
+{
+}
+
+void Interpreter::visit(const BreakStmt& stmt)
+{
+}
+
+void Interpreter::visit(const VarStmt& stmt)
+{
+    std::any value;
+    if (stmt.initializer != nullptr)
+    {
+        value = evaluate(*stmt.initializer);
+    }
+
+    environment.define(stmt.identifier.lexeme, value);
+}
+
+void Interpreter::visit(const WhileStmt& stmt)
+{
+}
+
+void Interpreter::visit(const ForStmt& stmt)
+{
+}
+
 std::any Interpreter::visit(const BinaryExpr& expr)
 {
+    using enum TokenType;
     std::any left = evaluate(*expr.left);
     std::any right = evaluate(*expr.right);
     switch (expr.op.type)
     {
-    case TokenType::MINUS:
+    case MINUS:
         checkNumberOperands(expr.op, left, right);
-        return left - right;
-    case TokenType::SLASH:
+        return std::any_cast<double>(left) - std::any_cast<double>(right);
+
+    case SLASH:
         checkNumberOperands(expr.op, left, right);
         if (std::any_cast<double>(right) == 0)
         {
             throw RuntimeError(expr.op, "Division by 0.");
         }
-        return left / right;
-    case TokenType::STAR:
-        checkNumberOperands(expr.op, left, right);
-        return left * right;
-    case TokenType::GREATER:
-        checkNumberOperands(expr.op, left, right);
-        return left > right;
-    case TokenType::GREATER_EQUAL:
-        checkNumberOperands(expr.op, left, right);
-        return left >= right;
-    case TokenType::LESS:
-        checkNumberOperands(expr.op, left, right);
-        return left < right;
-    case TokenType::LESS_EQUAL:
-        checkNumberOperands(expr.op, left, right);
-        return left <= right;
-    case TokenType::EQUAL_EQUAL:
-        return left == right;
-    case TokenType::EXCLAMATION_EQUAL:
-        return left != right;
-    case TokenType::PLUS:
-    {
-        auto expression = left + right;
-        if (expr.op.type == TokenType::PLUS)
-        {
-            if (!expression.has_value())
-            {
-                throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
-            }
+        return std::any_cast<double>(left) / std::any_cast<double>(right);
 
-            return expression;
+    case STAR:
+        checkNumberOperands(expr.op, left, right);
+        return std::any_cast<double>(left) * std::any_cast<double>(right);
+
+    case GREATER:
+        checkNumberOperands(expr.op, left, right);
+        return std::any_cast<double>(left) > std::any_cast<double>(right);
+
+    case GREATER_EQUAL:
+        checkNumberOperands(expr.op, left, right);
+        return std::any_cast<double>(left) >= std::any_cast<double>(right);
+
+    case LESS:
+        checkNumberOperands(expr.op, left, right);
+        return std::any_cast<double>(left) < std::any_cast<double>(right);
+
+    case LESS_EQUAL:
+        checkNumberOperands(expr.op, left, right);
+        return std::any_cast<double>(left) <= std::any_cast<double>(right);
+
+    case EQUAL_EQUAL:
+        return isEqual(left, right);
+
+    case EXCLAMATION_EQUAL:
+        return !isEqual(left, right);
+
+    case PLUS:
+        if (left.type() == typeid(std::string) && right.type() == typeid(std::string))
+        {
+            return std::any_cast<std::string>(left) + std::any_cast<std::string>(right);
         }
-    }
+        else if (left.type() == typeid(double) && right.type() == typeid(double))
+        {
+            return std::any_cast<double>(left) + std::any_cast<double>(right);
+        }
+        throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
+
     default:
-        return std::any{};
+        return {};
     }
 }
 
@@ -141,12 +251,17 @@ std::any Interpreter::visit(const UnaryExpr& expr)
     {
     case TokenType::MINUS:
         checkNumberOperand(expr.op, right);
-        return -right;
+        return -(std::any_cast<double>(right));
     case TokenType::EXCLAMATION:
         return !isTruthy(right);
     default:
         return std::any{};
     }
+}
+
+std::any Interpreter::visit(const VarExpr& expr)
+{
+    return environment.lookup(expr.identifier);
 }
 
 std::any Interpreter::visit(const GroupingExpr& expr)
@@ -194,11 +309,6 @@ std::any Interpreter::visit(const ThisExpr& expr)
     return std::any{};
 }
 
-std::any Interpreter::visit(const VarExpr& expr)
-{
-    return std::any{};
-}
-
 std::any Interpreter::visit(const ListExpr& expr)
 {
     return std::any{};
@@ -213,97 +323,3 @@ std::any Interpreter::visit(const DecrementExpr& expr)
 {
     return std::any{};
 }
-
-double operator-(const std::any& operand)
-{
-    return -(std::any_cast<double>(operand));
-}
-
-double operator-(const std::any& lhs, const std::any& rhs)
-{
-    return std::any_cast<double>(lhs) - std::any_cast<double>(rhs);
-}
-
-std::any operator+(const std::any& lhs, const std::any& rhs)
-{
-    if (lhs.type() == typeid(std::string) && rhs.type() == typeid(std::string))
-    {
-        return std::any_cast<std::string>(lhs) + std::any_cast<std::string>(rhs);
-    }
-    else if (lhs.type() == typeid(double) && rhs.type() == typeid(double))
-    {
-        return std::any_cast<double>(lhs) + std::any_cast<double>(rhs);
-    }
-
-    return std::any{};
-}
-
-double operator/(const std::any& lhs, const std::any& rhs)
-{
-    return std::any_cast<double>(lhs) / std::any_cast<double>(rhs);
-}
-
-double operator*(const std::any& lhs, const std::any& rhs)
-{
-    return std::any_cast<double>(lhs) * std::any_cast<double>(rhs);
-}
-
-bool operator>(const std::any& lhs, const std::any& rhs)
-{
-    return std::any_cast<double>(lhs) > std::any_cast<double>(rhs);
-};
-
-bool operator>=(const std::any& lhs, const std::any& rhs)
-{
-
-    return std::any_cast<double>(lhs) >= std::any_cast<double>(rhs);
-};
-
-bool operator<(const std::any& lhs, const std::any& rhs)
-{
-    return std::any_cast<double>(lhs) < std::any_cast<double>(rhs);
-};
-
-bool operator<=(const std::any& lhs, const std::any& rhs)
-{
-    return std::any_cast<double>(lhs) <= std::any_cast<double>(rhs);
-};
-
-bool operator==(const std::any& lhs, const std::any& rhs)
-{
-    if (!lhs.has_value() && !rhs.has_value())
-    {
-        return true;
-    }
-    if (!lhs.has_value())
-    {
-        return false;
-    }
-
-    if (lhs.type() != rhs.type())
-    {
-        return false;
-    }
-
-    if (lhs.type() == typeid(bool))
-    {
-        return std::any_cast<bool>(lhs) == std::any_cast<bool>(rhs);
-    }
-
-    if (lhs.type() == typeid(double))
-    {
-        return std::any_cast<double>(lhs) == std::any_cast<double>(rhs);
-    }
-
-    if (lhs.type() == typeid(std::string))
-    {
-        return std::any_cast<std::string>(lhs) == std::any_cast<std::string>(rhs);
-    }
-
-    return false;
-};
-
-bool operator!=(const std::any& lhs, const std::any& rhs)
-{
-    return !(lhs == rhs);
-};

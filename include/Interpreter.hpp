@@ -1,21 +1,29 @@
 #ifndef BIS_INTERPRETER_HPP
 #define BIS_INTERPRETER_HPP
+
+#include "Environment.hpp"
 #include "Expr.hpp"
 #include "RuntimeError.hpp"
+#include "Stmt.hpp"
 #include "Visitor.hpp"
 
-class Interpreter : public ExprVisitor<std::any>
+class Interpreter : public ExprVisitor<std::any>, public StmtVisitor
 {
+private:
+    Environment environment;
+
 public:
-    void interpret(unique_expr_ptr expr);
+    void interpret(const std::vector<unique_stmt_ptr>& statements);
 
 private:
     void checkNumberOperand(const Token& op, const std::any& operand) const;
     void checkNumberOperands(const Token& op, const std::any& lhs, const std::any& rhs) const;
     bool isTruthy(const std::any& object) const;
+    bool isEqual(const std::any& lhs, const std::any& rhs) const;
 
-    std::string stringify(std::any& object);
+    std::string stringify(std::any& object) const;
     std::any evaluate(const Expr& expr);
+    void execute(const Stmt& stmt);
 
     std::any visit(const BinaryExpr& expr) override;
     std::any visit(const UnaryExpr& expr) override;
@@ -32,18 +40,18 @@ private:
     std::any visit(const ListExpr& expr) override;
     std::any visit(const IncrementExpr& expr) override;
     std::any visit(const DecrementExpr& expr) override;
-};
 
-std::any operator+(const std::any& lhs, const std::any& rhs);
-double operator-(const std::any& operand);
-double operator-(const std::any& lhs, const std::any& rhs);
-double operator/(const std::any& lhs, const std::any& rhs);
-double operator*(const std::any& lhs, const std::any& rhs);
-bool operator>(const std::any& lhs, const std::any& rhs);
-bool operator>=(const std::any& lhs, const std::any& rhs);
-bool operator<(const std::any& lhs, const std::any& rhs);
-bool operator<=(const std::any& lhs, const std::any& rhs);
-bool operator==(const std::any& lhs, const std::any& rhs);
-bool operator!=(const std::any& lhs, const std::any& rhs);
+    void visit(const BlockStmt& stmt) override;
+    void visit(const ClassStmt& stmt) override;
+    void visit(const ExprStmt& stmt) override;
+    void visit(const FnStmt& stmt) override;
+    void visit(const IfStmt& stmt) override;
+    void visit(const PrintStmt& stmt) override;
+    void visit(const ReturnStmt& stmt) override;
+    void visit(const BreakStmt& stmt) override;
+    void visit(const VarStmt& stmt) override;
+    void visit(const WhileStmt& stmt) override;
+    void visit(const ForStmt& stmt) override;
+};
 
 #endif // BIS_INTERPRETER_HPP

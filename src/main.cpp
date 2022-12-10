@@ -25,16 +25,10 @@ std::string readFile(std::string_view filename)
 
 void run(std::string_view source)
 {
-    Lexer lexer = source;
-    Parser parser = lexer.scanTokens();
     Interpreter interpreter;
-    auto expressions = parser.parse();
-
-    for (auto& expr : expressions)
-    {
-        interpreter.interpret(std::move(expr));
-    }
-
+    Lexer lexer{source};
+    Parser parser{lexer.scanTokens()};
+    interpreter.interpret(parser.parse());
     if (Error::hadError || Error::hadRuntimeError)
     {
         Error::report();

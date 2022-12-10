@@ -5,9 +5,9 @@ BlockStmt::BlockStmt(std::vector<unique_stmt_ptr> statements) : statements{std::
 {
 }
 
-std::any BlockStmt::accept(StmtVisitor<std::any>& visitor) const
+void BlockStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 ClassStmt::ClassStmt(const Token& identifier, std::vector<std::unique_ptr<FnStmt>> methods,
@@ -17,9 +17,9 @@ ClassStmt::ClassStmt(const Token& identifier, std::vector<std::unique_ptr<FnStmt
     assert(this->identifier.type == TokenType::IDENTIFIER);
 }
 
-std::any ClassStmt::accept(StmtVisitor<std::any>& visitor) const
+void ClassStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 ExprStmt::ExprStmt(unique_expr_ptr expr) : expression{std::move(expr)}
@@ -27,9 +27,9 @@ ExprStmt::ExprStmt(unique_expr_ptr expr) : expression{std::move(expr)}
     assert(this->expression != nullptr);
 }
 
-std::any ExprStmt::accept(StmtVisitor<std::any>& visitor) const
+void ExprStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 FnStmt::FnStmt(const Token& identifier, std::vector<Token> params,
@@ -39,9 +39,9 @@ FnStmt::FnStmt(const Token& identifier, std::vector<Token> params,
     assert(this->identifier.type == TokenType::IDENTIFIER);
 }
 
-std::any FnStmt::accept(StmtVisitor<std::any>& visitor) const
+void FnStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 IfBranch::IfBranch(unique_expr_ptr condition, unique_stmt_ptr statement)
@@ -58,9 +58,9 @@ IfStmt::IfStmt(IfBranch main_branch, std::vector<IfBranch> elif_branches,
 {
 }
 
-std::any IfStmt::accept(StmtVisitor<std::any>& visitor) const
+void IfStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 PrintStmt::PrintStmt(unique_expr_ptr expr) : expression{std::move(expr)}
@@ -68,9 +68,9 @@ PrintStmt::PrintStmt(unique_expr_ptr expr) : expression{std::move(expr)}
     assert(this->expression != nullptr);
 }
 
-std::any PrintStmt::accept(StmtVisitor<std::any>& visitor) const
+void PrintStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 ReturnStmt::ReturnStmt(const Token& keyword, unique_expr_ptr expr)
@@ -79,9 +79,9 @@ ReturnStmt::ReturnStmt(const Token& keyword, unique_expr_ptr expr)
     assert(keyword.type == TokenType::RETURN);
 }
 
-std::any ReturnStmt::accept(StmtVisitor<std::any>& visitor) const
+void ReturnStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 BreakStmt::BreakStmt(const Token& keyword) : keyword{keyword}
@@ -89,9 +89,9 @@ BreakStmt::BreakStmt(const Token& keyword) : keyword{keyword}
     assert(this->keyword.type == TokenType::BREAK);
 }
 
-std::any BreakStmt::accept(StmtVisitor<std::any>& visitor) const
+void BreakStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 VarStmt::VarStmt(const Token& identifier, unique_expr_ptr initializer)
@@ -100,9 +100,9 @@ VarStmt::VarStmt(const Token& identifier, unique_expr_ptr initializer)
     assert(this->identifier.type == TokenType::IDENTIFIER);
 }
 
-std::any VarStmt::accept(StmtVisitor<std::any>& visitor) const
+void VarStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 WhileStmt::WhileStmt(unique_expr_ptr condition, unique_stmt_ptr body)
@@ -112,15 +112,15 @@ WhileStmt::WhileStmt(unique_expr_ptr condition, unique_stmt_ptr body)
     assert(this->body != nullptr);
 }
 
-std::any WhileStmt::accept(StmtVisitor<std::any>& visitor) const
+void WhileStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }
 
 ForStmt::ForStmt(unique_stmt_ptr initializer, unique_expr_ptr condition, unique_stmt_ptr increment,
                  unique_stmt_ptr body)
-    : initializer{std::move(initializer)}, body{std::move(body)},
-      increment{std::move(increment)}, condition{std::move(condition)}
+    : initializer{std::move(initializer)}, body{std::move(body)}, increment{std::move(increment)},
+      condition{std::move(condition)}
 {
     assert(this->initializer != nullptr);
     assert(this->condition != nullptr);
@@ -128,7 +128,7 @@ ForStmt::ForStmt(unique_stmt_ptr initializer, unique_expr_ptr condition, unique_
     assert(this->body != nullptr);
 }
 
-std::any ForStmt::accept(StmtVisitor<std::any>& visitor) const
+void ForStmt::accept(StmtVisitor& visitor) const
 {
-    return visitor.visit(*this);
+    visitor.visit(*this);
 }

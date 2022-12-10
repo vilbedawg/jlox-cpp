@@ -7,14 +7,16 @@
 class Lexer
 {
 public:
-    Lexer(std::string_view source);
+    explicit Lexer(std::string_view source);
     std::vector<Token>& scanTokens();
 
 private:
     const std::string source;
     std::vector<Token> tokens;
-    unsigned int start, current, line;
-    static const std::unordered_map<std::string, TokenType> keywords;
+    unsigned int start = 0;
+    unsigned int current = 0;
+    unsigned int line = 1;
+    static const std::unordered_map<std::string_view, TokenType> keywords;
 
     bool isEOF() const;
     bool isDigit(const char c) const;
