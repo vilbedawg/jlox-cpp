@@ -43,6 +43,7 @@ private:
     unique_stmt_ptr varDeclaration();
     unique_stmt_ptr printStatement();
     unique_stmt_ptr expressionStatement();
+    std::vector<unique_stmt_ptr> block();
 
     template <typename... Args>
     bool match(Args... args);

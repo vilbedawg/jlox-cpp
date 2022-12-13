@@ -20,6 +20,7 @@ std::vector<Token>& Lexer::scanTokens()
         start = current;
         scanToken();
     }
+
     tokens.emplace_back(TokenType::_EOF, "", line);
     return tokens;
 }
@@ -147,12 +148,12 @@ void Lexer::number()
     {
         // Consume the "."
         advance();
-
         while (isDigit(peek()))
         {
             advance();
         }
     }
+
     addToken(TokenType::NUMBER);
 }
 

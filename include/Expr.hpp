@@ -42,10 +42,10 @@ struct IncrementExpr : Expr
         PREFIX
     };
 
+    std::unique_ptr<VarExpr> identifier;
     Type type;
-    std::unique_ptr<VarExpr> variable;
 
-    IncrementExpr(std::unique_ptr<VarExpr> variable, Type type);
+    IncrementExpr(std::unique_ptr<VarExpr> identifier, Type type);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -57,10 +57,10 @@ struct DecrementExpr : Expr
         PREFIX
     };
 
+    std::unique_ptr<VarExpr> identifier;
     Type type;
-    std::unique_ptr<VarExpr> variable;
 
-    DecrementExpr(std::unique_ptr<VarExpr> variable, Type type);
+    DecrementExpr(std::unique_ptr<VarExpr> identifier, Type type);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 

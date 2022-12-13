@@ -1,6 +1,12 @@
 #include "../include/Interpreter.hpp"
 #include "../include/Logger.hpp"
 
+Interpreter::Interpreter()
+{
+    global_environment = std::make_shared<Environment>();
+    environment = std::make_unique<Environment>();
+}
+
 void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
 {
     try
@@ -54,6 +60,17 @@ std::any Interpreter::evaluate(const Expr& expr)
 void Interpreter::execute(const Stmt& stmt)
 {
     stmt.accept(*this);
+}
+
+void Interpreter::executeBlock(const std::vector<unique_stmt_ptr>& statements,
+                               std::unique_ptr<Environment> new_env)
+{
+    ScopedEnvironment scoped_env(*this, std::move(new_env));
+    for (const auto& statement : statements)
+    {
+        assert(statement != nullptr);
+        execute(*statement);
+    }
 }
 
 void Interpreter::checkNumberOperand(const Token& op, const std::any& operand) const
@@ -129,7 +146,7 @@ void Interpreter::visit(const ExprStmt& stmt)
 
 void Interpreter::visit(const PrintStmt& stmt)
 {
-    if (stmt.expression.get() == nullptr)
+    if (!stmt.expression.get())
     {
         std::cout << '\n';
         return;
@@ -141,6 +158,7 @@ void Interpreter::visit(const PrintStmt& stmt)
 
 void Interpreter::visit(const BlockStmt& stmt)
 {
+    executeBlock(stmt.statements, std::make_unique<Environment>(environment.get()));
 }
 
 void Interpreter::visit(const ClassStmt& stmt)
@@ -171,7 +189,7 @@ void Interpreter::visit(const VarStmt& stmt)
         value = evaluate(*stmt.initializer);
     }
 
-    environment.define(stmt.identifier.lexeme, value);
+    environment.get()->define(stmt.identifier.lexeme, value);
 }
 
 void Interpreter::visit(const WhileStmt& stmt)
@@ -260,7 +278,7 @@ std::any Interpreter::visit(const UnaryExpr& expr)
 
 std::any Interpreter::visit(const VarExpr& expr)
 {
-    return environment.lookup(expr.identifier);
+    return environment.get()->lookup(expr.identifier);
 }
 
 std::any Interpreter::visit(const GroupingExpr& expr)
@@ -275,8 +293,8 @@ std::any Interpreter::visit(const LiteralExpr& expr)
 
 std::any Interpreter::visit(const AssignExpr& expr)
 {
-    auto value = evaluate(*expr.value);
-    environment.assign(expr.identifier, value);
+    const auto value = evaluate(*expr.value);
+    environment.get()->assign(expr.identifier, value);
     return value;
 }
 
@@ -317,10 +335,43 @@ std::any Interpreter::visit(const ListExpr& expr)
 
 std::any Interpreter::visit(const IncrementExpr& expr)
 {
-    return std::any{};
+    const auto variable = evaluate(*expr.identifier);
+    const auto* varExpr = expr.identifier.get();
+
+    if (variable.type() != typeid(double))
+    {
+        throw RuntimeError(varExpr->identifier, "Cannot increment a non integer type '" +
+                                                    varExpr->identifier.lexeme + "'.");
+    }
+    const auto increment = std::any_cast<double>(variable) + 1;
+    environment.get()->assign(varExpr->identifier, increment);
+    return increment;
 }
 
 std::any Interpreter::visit(const DecrementExpr& expr)
 {
-    return std::any{};
+    const auto variable = evaluate(*expr.identifier);
+    const auto* varExpr = expr.identifier.get();
+
+    if (variable.type() != typeid(double))
+    {
+        throw RuntimeError(varExpr->identifier, "Cannot decrement a non integer type '" +
+                                                    varExpr->identifier.lexeme + "'.");
+    }
+    const auto decrement = std::any_cast<double>(variable) - 1;
+    environment.get()->assign(varExpr->identifier, decrement);
+    return decrement;
+}
+
+Interpreter::ScopedEnvironment::ScopedEnvironment(Interpreter& interpreter,
+                                                  std::unique_ptr<Environment> env)
+    : interpreter{interpreter}
+{
+    previous_env = std::move(interpreter.environment);
+    interpreter.environment = std::move(env);
+}
+
+Interpreter::ScopedEnvironment::~ScopedEnvironment()
+{
+    interpreter.environment = std::move(previous_env);
 }

@@ -11,7 +11,7 @@ Token::Token(const TokenType type, std::string lexeme, const unsigned int line)
 std::ostream& operator<<(std::ostream& os, const TokenType type)
 {
     using enum TokenType;
-    static const std::map<TokenType, std::string_view> type_map{
+    static const std::map<TokenType, std::string> type_map{
         {LEFT_PAREN, "LEFT_PAREN"},
         {RIGHT_PAREN, "RIGHT_PAREN"},
         {LEFT_BRACE, "LEFT_BRACE"},

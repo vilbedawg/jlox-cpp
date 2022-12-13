@@ -29,12 +29,30 @@ std::vector<unique_stmt_ptr> Parser::parse()
 
 unique_stmt_ptr Parser::statement()
 {
+    // statement -> exprStmt
+    //             | forStmt
+    //             | ifStmt
+    //             | printStmt
+    //             | returnStmt
+    //             | whileStmt
+    //             | block;
+
+    if (match(TokenType::PRINT))
+    {
+        return printStatement();
+    }
+
+    if (match(TokenType::LEFT_BRACE))
+    {
+        return std::make_unique<BlockStmt>(block());
+    }
 
     return match(TokenType::PRINT) ? printStatement() : expressionStatement();
 }
 
 unique_stmt_ptr Parser::declaration()
 {
+    // declaration → varDecl | statement ;
     try
     {
         if (match(TokenType::VAR))
@@ -63,7 +81,6 @@ unique_stmt_ptr Parser::varDeclaration()
     // varDeclaration -> IDENTIFIER ("=" expression)? ";" ;
     const auto& identifier = consume(TokenType::IDENTIFIER, "Expect variable name.");
     auto initializer = match(TokenType::EQUAL) ? expression() : nullptr;
-
     static_cast<void>(consume(TokenType::SEMICOLON, "Expect ';' after variable declaration."));
     return std::make_unique<VarStmt>(identifier, std::move(initializer));
 }
@@ -76,9 +93,25 @@ unique_stmt_ptr Parser::expressionStatement()
     return std::make_unique<ExprStmt>(std::move(expr));
 }
 
+std::vector<unique_stmt_ptr> Parser::block()
+{
+    // block -> "{" declaration* "}" ;
+    std::vector<unique_stmt_ptr> statements;
+
+    while (!check(TokenType::RIGHT_BRACE) && !isAtEnd())
+    {
+        statements.emplace_back(declaration());
+    }
+
+    consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
+    return statements;
+}
+
 unique_expr_ptr Parser::assignment()
 {
+    // assignment → IDENTIFIER "=" assignment ;
     auto expr = equality();
+
     if (match(TokenType::EQUAL))
     {
         if (dynamic_cast<VarExpr*>(expr.get()))
@@ -87,6 +120,7 @@ unique_expr_ptr Parser::assignment()
             auto identifier{static_cast<VarExpr*>(expr.release())->identifier};
             return std::make_unique<AssignExpr>(identifier, std::move(value));
         }
+
         Error::addError(previous(), "Invalid assignment target.");
     }
 

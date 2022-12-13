@@ -10,10 +10,23 @@
 class Interpreter : public ExprVisitor<std::any>, public StmtVisitor
 {
 private:
-    Environment environment;
+    std::shared_ptr<Environment> global_environment;
+    std::unique_ptr<Environment> environment;
+
+    class ScopedEnvironment
+    {
+    public:
+        ScopedEnvironment(Interpreter& interpreter, std::unique_ptr<Environment> env);
+        ~ScopedEnvironment();
+
+    private:
+        Interpreter& interpreter;
+        std::unique_ptr<Environment> previous_env;
+    };
 
 public:
     void interpret(const std::vector<unique_stmt_ptr>& statements);
+    Interpreter();
 
 private:
     void checkNumberOperand(const Token& op, const std::any& operand) const;
@@ -24,6 +37,8 @@ private:
     std::string stringify(std::any& object) const;
     std::any evaluate(const Expr& expr);
     void execute(const Stmt& stmt);
+    void executeBlock(const std::vector<unique_stmt_ptr>& statements,
+                      std::unique_ptr<Environment> new_env);
 
     std::any visit(const BinaryExpr& expr) override;
     std::any visit(const UnaryExpr& expr) override;
