@@ -20,6 +20,7 @@ void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
     catch (const RuntimeError& error)
     {
         Error::addRuntimeError(error);
+        Error::report();
     }
 }
 
@@ -171,6 +172,25 @@ void Interpreter::visit(const FnStmt& stmt)
 
 void Interpreter::visit(const IfStmt& stmt)
 {
+    if (isTruthy(evaluate(*stmt.main_branch.condition)))
+    {
+        execute(*stmt.main_branch.statement);
+        return;
+    }
+
+    for (const auto& elif : stmt.elif_branches)
+    {
+        if (isTruthy(evaluate(*elif.condition)))
+        {
+            execute(*elif.statement);
+            return;
+        }
+    }
+
+    if (stmt.else_branch)
+    {
+        execute(*stmt.else_branch);
+    }
 }
 
 void Interpreter::visit(const ReturnStmt& stmt)
@@ -184,7 +204,7 @@ void Interpreter::visit(const BreakStmt& stmt)
 void Interpreter::visit(const VarStmt& stmt)
 {
     std::any value;
-    if (stmt.initializer != nullptr)
+    if (stmt.initializer)
     {
         value = evaluate(*stmt.initializer);
     }
@@ -194,17 +214,42 @@ void Interpreter::visit(const VarStmt& stmt)
 
 void Interpreter::visit(const WhileStmt& stmt)
 {
+    while (isTruthy(evaluate(*stmt.condition)))
+    {
+        execute(*stmt.body);
+    }
 }
 
 void Interpreter::visit(const ForStmt& stmt)
 {
+    auto current = std::make_unique<Environment>(environment.get());
+    ScopedEnvironment new_env{*this, std::move(current)};
+
+    if (stmt.initializer)
+    {
+        execute(*stmt.initializer);
+    }
+
+    if (!stmt.condition)
+    {
+        return;
+    }
+
+    while (isTruthy(evaluate(*stmt.condition)))
+    {
+        execute(*stmt.body);
+        if (stmt.increment)
+        {
+            evaluate(*stmt.increment);
+        }
+    }
 }
 
 std::any Interpreter::visit(const BinaryExpr& expr)
 {
     using enum TokenType;
-    std::any left = evaluate(*expr.left);
-    std::any right = evaluate(*expr.right);
+    auto left = evaluate(*expr.left);
+    auto right = evaluate(*expr.right);
     switch (expr.op.type)
     {
     case MINUS:
@@ -320,7 +365,20 @@ std::any Interpreter::visit(const SuperExpr& expr)
 
 std::any Interpreter::visit(const LogicalExpr& expr)
 {
-    return std::any{};
+    auto left = evaluate(*expr.left);
+    if (expr.op.type == TokenType::OR)
+    {
+        if (isTruthy(left))
+        {
+            return left;
+        }
+    }
+    else if (!isTruthy(left))
+    {
+        return left;
+    }
+
+    return evaluate(*expr.right);
 }
 
 std::any Interpreter::visit(const ThisExpr& expr)
@@ -343,9 +401,10 @@ std::any Interpreter::visit(const IncrementExpr& expr)
         throw RuntimeError(varExpr->identifier, "Cannot increment a non integer type '" +
                                                     varExpr->identifier.lexeme + "'.");
     }
-    const auto increment = std::any_cast<double>(variable) + 1;
-    environment.get()->assign(varExpr->identifier, increment);
-    return increment;
+    const auto incremented_variable = std::any_cast<double>(variable) + 1;
+    environment->assign(varExpr->identifier, incremented_variable);
+
+    return expr.type == IncrementExpr::Type::POSTFIX ? variable : incremented_variable;
 }
 
 std::any Interpreter::visit(const DecrementExpr& expr)
@@ -358,9 +417,10 @@ std::any Interpreter::visit(const DecrementExpr& expr)
         throw RuntimeError(varExpr->identifier, "Cannot decrement a non integer type '" +
                                                     varExpr->identifier.lexeme + "'.");
     }
-    const auto decrement = std::any_cast<double>(variable) - 1;
-    environment.get()->assign(varExpr->identifier, decrement);
-    return decrement;
+    const auto decremented_variable = std::any_cast<double>(variable) - 1;
+    environment->assign(varExpr->identifier, decremented_variable);
+
+    return expr.type == DecrementExpr::Type::POSTFIX ? variable : decremented_variable;
 }
 
 Interpreter::ScopedEnvironment::ScopedEnvironment(Interpreter& interpreter,

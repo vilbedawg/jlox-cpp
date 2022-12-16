@@ -108,11 +108,11 @@ struct WhileStmt : Stmt
 struct ForStmt : Stmt
 {
     unique_stmt_ptr initializer;
+    unique_expr_ptr condition;
+    unique_expr_ptr increment;
     unique_stmt_ptr body;
-    unique_stmt_ptr increment; // OPTIONAL
-    unique_expr_ptr condition; // OPTIONAL
 
-    ForStmt(unique_stmt_ptr initializer, unique_expr_ptr condition, unique_stmt_ptr increment,
+    ForStmt(unique_stmt_ptr initializer, unique_expr_ptr condition, unique_expr_ptr increment,
             unique_stmt_ptr body);
     void accept(StmtVisitor& visitor) const override;
 };

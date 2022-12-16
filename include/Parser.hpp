@@ -14,7 +14,7 @@
 class Parser
 {
 public:
-    explicit Parser(const std::vector<Token>& tokens);
+    explicit Parser(std::vector<Token> tokens);
     std::vector<unique_stmt_ptr> parse();
 
 private:
@@ -44,6 +44,12 @@ private:
     unique_stmt_ptr printStatement();
     unique_stmt_ptr expressionStatement();
     std::vector<unique_stmt_ptr> block();
+    unique_stmt_ptr ifStatement();
+    unique_stmt_ptr whileStatement();
+    unique_stmt_ptr forStatement();
+    unique_stmt_ptr forInitializer();
+    unique_expr_ptr forCondition();
+    unique_expr_ptr forIncrement();
 
     template <typename... Args>
     bool match(Args... args);
@@ -53,7 +59,7 @@ private:
     void synchronize();
     void advance();
 
-    Token& consume(TokenType type, std::string msg);
+    void expect(TokenType type, std::string msg);
     Token& peek();
     Token& previous();
 

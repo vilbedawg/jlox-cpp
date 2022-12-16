@@ -28,15 +28,13 @@ void run(std::string_view source)
     Interpreter interpreter;
     Lexer lexer{source};
     Parser parser{lexer.scanTokens()};
-    interpreter.interpret(parser.parse());
+    const auto statements = parser.parse();
     if (Error::hadError || Error::hadRuntimeError)
     {
         Error::report();
         return;
     }
-
-    // AstPrinter printer;
-    // std::cout << printer.print(expressions);
+    interpreter.interpret(statements);
 }
 
 void initFile(std::string_view filename)

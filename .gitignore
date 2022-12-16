@@ -40,6 +40,10 @@
 /x64/Debug
 /Bis Interpreter/x64/Debug
 .vscode
+
+# Other
 /src/main
 /build
 /googletest
+/cmake-build-debug
+/.idea

@@ -53,8 +53,9 @@ IfBranch::IfBranch(unique_expr_ptr condition, unique_stmt_ptr statement)
 
 IfStmt::IfStmt(IfBranch main_branch, std::vector<IfBranch> elif_branches,
                unique_stmt_ptr else_branch)
-    : main_branch{std::move(main_branch)}, elif_branches{std::move(elif_branches)},
-      else_branch{std::move(else_branch)}
+    : main_branch{std::move(main_branch)},     //
+      elif_branches{std::move(elif_branches)}, //
+      else_branch{std::move(else_branch)}      //
 {
 }
 
@@ -117,15 +118,15 @@ void WhileStmt::accept(StmtVisitor& visitor) const
     visitor.visit(*this);
 }
 
-ForStmt::ForStmt(unique_stmt_ptr initializer, unique_expr_ptr condition, unique_stmt_ptr increment,
+ForStmt::ForStmt(unique_stmt_ptr initializer, unique_expr_ptr condition, unique_expr_ptr increment,
                  unique_stmt_ptr body)
-    : initializer{std::move(initializer)}, body{std::move(body)}, increment{std::move(increment)},
-      condition{std::move(condition)}
+    : initializer{std::move(initializer)}, condition{std::move(condition)},
+      increment{std::move(increment)}, body{std::move(body)}
 {
-    assert(this->initializer != nullptr);
-    assert(this->condition != nullptr);
-    assert(this->increment != nullptr);
-    assert(this->body != nullptr);
+    // assert(this->initializer != nullptr);
+    // assert(this->condition != nullptr);
+    // assert(this->increment != nullptr);
+    // assert(this->body != nullptr);
 }
 
 void ForStmt::accept(StmtVisitor& visitor) const

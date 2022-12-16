@@ -5,6 +5,7 @@ namespace Error
     std::vector<ErrorInfo> exceptionList{};
     bool hadError = false;
     bool hadRuntimeError = false;
+
     void addRuntimeError(const RuntimeError& error) noexcept
     {
         exceptionList.emplace_back(error.getToken().line, "", error.what());

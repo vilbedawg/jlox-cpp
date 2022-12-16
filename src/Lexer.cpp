@@ -2,18 +2,19 @@
 #include "../include/Logger.hpp"
 
 const std::unordered_map<std::string, TokenType> Lexer::keywords{
-    {"and", TokenType::AND},       {"or", TokenType::OR},         {"class", TokenType::CLASS},
-    {"if", TokenType::IF},         {"else", TokenType::ELSE},     {"false", TokenType::_FALSE},
-    {"true", TokenType::_TRUE},    {"fn", TokenType::FN},         {"for", TokenType::FOR},
-    {"while", TokenType::WHILE},   {"nil", TokenType::NIL},       {"print", TokenType::PRINT},
-    {"return", TokenType::RETURN}, {"super", TokenType::SUPER},   {"this", TokenType::THIS},
-    {"var", TokenType::VAR},       {"lambda", TokenType::LAMBDA}, {"break", TokenType::BREAK}};
+    {"and", TokenType::AND},      {"or", TokenType::OR},         {"class", TokenType::CLASS},
+    {"if", TokenType::IF},        {"else", TokenType::ELSE},     {"elif", TokenType::ELIF},
+    {"false", TokenType::_FALSE}, {"true", TokenType::_TRUE},    {"fn", TokenType::FN},
+    {"for", TokenType::FOR},      {"while", TokenType::WHILE},   {"nil", TokenType::NIL},
+    {"print", TokenType::PRINT},  {"return", TokenType::RETURN}, {"super", TokenType::SUPER},
+    {"this", TokenType::THIS},    {"var", TokenType::VAR},       {"lambda", TokenType::LAMBDA},
+    {"break", TokenType::BREAK}};
 
-Lexer::Lexer(std ::string_view source) : source{source}
+Lexer::Lexer(std::string_view source) : source{source}
 {
 }
 
-std::vector<Token>& Lexer::scanTokens()
+std::vector<Token> Lexer::scanTokens()
 {
     while (!isEOF())
     {
@@ -64,7 +65,7 @@ void Lexer::scanToken()
         addToken(STAR);
         break;
 
-    // > 1 character lexemes.
+        // > 1 character lexemes.
     case '!':
         addToken(match('=') ? EXCLAMATION_EQUAL : EXCLAMATION);
         break;
@@ -96,7 +97,7 @@ void Lexer::scanToken()
             addToken(SLASH);
         }
 
-    // ignore whitespace.
+        // ignore whitespace.
     case ' ':
     case '\r':
     case '\t':
@@ -105,7 +106,7 @@ void Lexer::scanToken()
         line++;
         break;
 
-    // Literals.
+        // Literals.
     case '"':
         string();
         break;

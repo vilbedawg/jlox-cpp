@@ -1,14 +1,14 @@
 add_library(BIS)
 
 target_include_directories(BIS
-    PUBLIC
+        PUBLIC
         ${SOURCE_DIR}/include
-    PRIVATE
+        PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-)
+        )
 
 target_sources(BIS
-    PUBLIC
+        PUBLIC
         AstPrinter.cpp
         Expr.cpp
         Lexer.cpp
@@ -18,20 +18,20 @@ target_sources(BIS
         Token.cpp
         Interpreter.cpp
         Environment.cpp
-)
+        )
 
 add_executable(main main.cpp)
 
 target_include_directories(main
-    PUBLIC
+        PUBLIC
         ${SOURCE_DIR}/include
-    PRIVATE
+        PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-)
+        )
 
 target_sources(main
-    PRIVATE
-       main.cpp
-)
+        PRIVATE
+        main.cpp
+        )
 
 target_link_libraries(main PRIVATE BIS)

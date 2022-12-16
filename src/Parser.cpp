@@ -12,7 +12,7 @@
  *  ?                   if statement
  */
 
-Parser::Parser(const std::vector<Token>& tokens) : tokens{tokens}
+Parser::Parser(std::vector<Token> tokens) : tokens{std::move(tokens)}
 {
 }
 
@@ -36,18 +36,104 @@ unique_stmt_ptr Parser::statement()
     //             | returnStmt
     //             | whileStmt
     //             | block;
-
+    if (match(TokenType::FOR))
+        return forStatement();
+    if (match(TokenType::IF))
+        return ifStatement();
     if (match(TokenType::PRINT))
-    {
         return printStatement();
-    }
-
+    if (match(TokenType::WHILE))
+        return whileStatement();
     if (match(TokenType::LEFT_BRACE))
-    {
         return std::make_unique<BlockStmt>(block());
+
+    return expressionStatement();
+}
+
+unique_stmt_ptr Parser::forInitializer()
+{
+    if (match(TokenType::SEMICOLON))
+    {
+        return nullptr;
+    }
+    else if (match(TokenType::VAR))
+    {
+        return varDeclaration();
+    }
+    else
+    {
+        return expressionStatement();
+    }
+}
+
+unique_expr_ptr Parser::forCondition()
+{
+    unique_expr_ptr condition;
+    if (!check(TokenType::SEMICOLON))
+    {
+        condition = expression();
+    }
+    expect(TokenType::SEMICOLON, "Expect ';' after loop condition.");
+
+    return condition;
+}
+
+unique_expr_ptr Parser::forIncrement()
+{
+    unique_expr_ptr increment;
+    if (!check(TokenType::RIGHT_PAREN))
+    {
+        increment = expression();
+    }
+    expect(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
+
+    return increment;
+}
+
+unique_stmt_ptr Parser::forStatement()
+{
+    /**
+     * forStmt ->   "for" "(" ( varDecl | exprStmt | ";" )
+     *              expression? ";"
+     *              expression? ")" statement ;
+     */
+    expect(TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
+    auto initializer = forInitializer();
+    auto condition = forCondition();
+    auto increment = forIncrement();
+    auto body = statement();
+
+    return std::make_unique<ForStmt>(std::move(initializer), std::move(condition),
+                                     std::move(increment), std::move(body));
+}
+
+unique_stmt_ptr Parser::ifStatement()
+{
+    // ifStmt -> "if" "(" expression ")" statement ("elif" statement )? ( "else" statement )? ;
+    expect(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
+    auto if_condition = expression();
+    expect(TokenType::RIGHT_PAREN, "Expect ')' after 'if condition.");
+    auto then_statement = statement();
+
+    IfBranch main_branch{std::move(if_condition), std::move(then_statement)};
+    std::vector<IfBranch> elif_branches;
+    while (match(TokenType::ELIF))
+    {
+        expect(TokenType::LEFT_PAREN, "Expect '(' after 'elif'.");
+        auto elif_condition = expression();
+        expect(TokenType::RIGHT_PAREN, "Expect ')' after 'elif'.");
+        auto elif_statement = statement();
+        elif_branches.emplace_back(std::move(elif_condition), std::move(elif_statement));
     }
 
-    return match(TokenType::PRINT) ? printStatement() : expressionStatement();
+    unique_stmt_ptr else_branch;
+    if (match(TokenType::ELSE))
+    {
+        else_branch = statement();
+    }
+
+    return std::make_unique<IfStmt>(std::move(main_branch), std::move(elif_branches),
+                                    std::move(else_branch));
 }
 
 unique_stmt_ptr Parser::declaration()
@@ -59,6 +145,7 @@ unique_stmt_ptr Parser::declaration()
         {
             return varDeclaration();
         }
+
         return statement();
     }
     catch (const ParseError& error)
@@ -72,24 +159,39 @@ unique_stmt_ptr Parser::printStatement()
 {
     // printStmt -> "print" expression ";" ;
     auto value = expression();
-    static_cast<void>(consume(TokenType::SEMICOLON, "Expect ';' after value."));
+    expect(TokenType::SEMICOLON, "Expect ';' after value.");
+
     return std::make_unique<PrintStmt>(std::move(value));
 }
 
 unique_stmt_ptr Parser::varDeclaration()
 {
     // varDeclaration -> IDENTIFIER ("=" expression)? ";" ;
-    const auto& identifier = consume(TokenType::IDENTIFIER, "Expect variable name.");
+    expect(TokenType::IDENTIFIER, "Expect variable name.");
+    auto identifier = previous();
     auto initializer = match(TokenType::EQUAL) ? expression() : nullptr;
-    static_cast<void>(consume(TokenType::SEMICOLON, "Expect ';' after variable declaration."));
+    expect(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
+
     return std::make_unique<VarStmt>(identifier, std::move(initializer));
+}
+
+unique_stmt_ptr Parser::whileStatement()
+{
+    // whileStmt -> "while" "(" expression ")" statement ;
+    expect(TokenType::LEFT_PAREN, "Expect a '(' after 'while'.");
+    auto condition = expression();
+    expect(TokenType::RIGHT_PAREN, "Expect a ')' after 'while'.");
+    auto body = statement();
+
+    return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
 }
 
 unique_stmt_ptr Parser::expressionStatement()
 {
     // exprStmt -> expression ";" ;
     auto expr = expression();
-    static_cast<void>(consume(TokenType::SEMICOLON, "Expect ';' after value."));
+    expect(TokenType::SEMICOLON, "Expect ';' after value.");
+
     return std::make_unique<ExprStmt>(std::move(expr));
 }
 
@@ -97,20 +199,20 @@ std::vector<unique_stmt_ptr> Parser::block()
 {
     // block -> "{" declaration* "}" ;
     std::vector<unique_stmt_ptr> statements;
-
     while (!check(TokenType::RIGHT_BRACE) && !isAtEnd())
     {
         statements.emplace_back(declaration());
     }
 
-    consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
+    expect(TokenType::RIGHT_BRACE, "Expect '}' after block.");
+
     return statements;
 }
 
 unique_expr_ptr Parser::assignment()
 {
-    // assignment → IDENTIFIER "=" assignment ;
-    auto expr = equality();
+    // assignment → IDENTIFIER "=" assignment | logic_or ;
+    auto expr = orExpression();
 
     if (match(TokenType::EQUAL))
     {
@@ -118,10 +220,41 @@ unique_expr_ptr Parser::assignment()
         {
             auto value = assignment();
             auto identifier{static_cast<VarExpr*>(expr.release())->identifier};
+
             return std::make_unique<AssignExpr>(identifier, std::move(value));
         }
 
         Error::addError(previous(), "Invalid assignment target.");
+    }
+
+    return expr;
+}
+
+unique_expr_ptr Parser::orExpression()
+{
+    // logic_or -> logic_and ( "or" logic_and )* ;
+    auto expr = andExpression();
+
+    while (match(TokenType::OR))
+    {
+        const auto& _operator = previous();
+        auto right = andExpression();
+        expr = std::make_unique<LogicalExpr>(std::move(expr), _operator, std::move(right));
+    }
+
+    return expr;
+}
+
+unique_expr_ptr Parser::andExpression()
+{
+    // logic_and -> equality ( "and" equality )* ;
+    auto expr = equality();
+
+    while (match(TokenType::AND))
+    {
+        const auto& _operator = previous();
+        auto right = andExpression();
+        expr = std::make_unique<LogicalExpr>(std::move(expr), _operator, std::move(right));
     }
 
     return expr;
@@ -137,6 +270,7 @@ unique_expr_ptr Parser::equality()
 {
     // equality -> comparison ( ( "!=" | "==" ) comparison )* ;
     auto expr = comparison();
+
     while (match(TokenType::EXCLAMATION_EQUAL, TokenType::EQUAL_EQUAL))
     {
         const auto& _operator = previous();
@@ -200,6 +334,7 @@ unique_expr_ptr Parser::unary()
     {
         const auto& _operator = previous();
         auto right = unary();
+
         return std::make_unique<UnaryExpr>(_operator, std::move(right));
     }
 
@@ -347,7 +482,7 @@ unique_expr_ptr Parser::primary()
     if (match(LEFT_PAREN))
     {
         auto expr = expression();
-        static_cast<void>(consume(RIGHT_PAREN, "Expect ')' after expression."));
+        expect(RIGHT_PAREN, "Expect ')' after expression.");
         return std::make_unique<GroupingExpr>(std::move(expr));
     }
 
@@ -367,15 +502,14 @@ bool Parser::match(Args... args)
     return is_match;
 }
 
-Token& Parser::consume(TokenType type, std::string msg)
+void Parser::expect(TokenType type, std::string msg)
 {
-    if (check(type))
+    if (!check(type))
     {
-        advance();
-        return previous();
+        throw error(peek(), std::move(msg));
     }
 
-    throw error(peek(), std::move(msg));
+    advance();
 }
 
 bool Parser::check(TokenType type)
@@ -439,8 +573,7 @@ void Parser::synchronize()
         case BREAK:
             return;
         default:
-            break;
+            advance();
         }
-        advance();
     }
 }
