@@ -3,7 +3,6 @@
 
 Interpreter::Interpreter()
 {
-    global_environment = std::make_shared<Environment>();
     environment = std::make_unique<Environment>();
 }
 
@@ -209,7 +208,7 @@ void Interpreter::visit(const VarStmt& stmt)
         value = evaluate(*stmt.initializer);
     }
 
-    environment.get()->define(stmt.identifier.lexeme, value);
+    environment->define(stmt.identifier.lexeme, value);
 }
 
 void Interpreter::visit(const WhileStmt& stmt)
@@ -323,7 +322,7 @@ std::any Interpreter::visit(const UnaryExpr& expr)
 
 std::any Interpreter::visit(const VarExpr& expr)
 {
-    return environment.get()->lookup(expr.identifier);
+    return environment->lookup(expr.identifier);
 }
 
 std::any Interpreter::visit(const GroupingExpr& expr)
@@ -338,8 +337,8 @@ std::any Interpreter::visit(const LiteralExpr& expr)
 
 std::any Interpreter::visit(const AssignExpr& expr)
 {
-    const auto value = evaluate(*expr.value);
-    environment.get()->assign(expr.identifier, value);
+    auto value = evaluate(*expr.value);
+    environment->assign(expr.identifier, value);
     return value;
 }
 

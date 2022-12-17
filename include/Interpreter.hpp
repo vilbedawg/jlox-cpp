@@ -10,7 +10,6 @@
 class Interpreter : public ExprVisitor<std::any>, public StmtVisitor
 {
 private:
-    std::shared_ptr<Environment> global_environment;
     std::unique_ptr<Environment> environment;
 
     class ScopedEnvironment

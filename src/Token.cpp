@@ -3,7 +3,7 @@
 #include <iostream>
 #include <map>
 
-Token::Token(const TokenType type, std::string lexeme, const unsigned int line)
+Token::Token(TokenType type, std::string lexeme, unsigned int line)
     : type{type}, lexeme{std::move(lexeme)}, line{line}
 {
 }

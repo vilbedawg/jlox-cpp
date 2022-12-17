@@ -36,15 +36,15 @@ unique_stmt_ptr Parser::statement()
     //             | returnStmt
     //             | whileStmt
     //             | block;
-    if (match(TokenType::FOR))
+    if (match({TokenType::FOR}))
         return forStatement();
-    if (match(TokenType::IF))
+    if (match({TokenType::IF}))
         return ifStatement();
-    if (match(TokenType::PRINT))
+    if (match({TokenType::PRINT}))
         return printStatement();
-    if (match(TokenType::WHILE))
+    if (match({TokenType::WHILE}))
         return whileStatement();
-    if (match(TokenType::LEFT_BRACE))
+    if (match({TokenType::LEFT_BRACE}))
         return std::make_unique<BlockStmt>(block());
 
     return expressionStatement();
@@ -52,11 +52,11 @@ unique_stmt_ptr Parser::statement()
 
 unique_stmt_ptr Parser::forInitializer()
 {
-    if (match(TokenType::SEMICOLON))
+    if (match({TokenType::SEMICOLON}))
     {
         return nullptr;
     }
-    else if (match(TokenType::VAR))
+    else if (match({TokenType::VAR}))
     {
         return varDeclaration();
     }
@@ -66,28 +66,17 @@ unique_stmt_ptr Parser::forInitializer()
     }
 }
 
-unique_expr_ptr Parser::forCondition()
+unique_expr_ptr Parser::forExpression(TokenType type, std::string msg)
 {
-    unique_expr_ptr condition;
-    if (!check(TokenType::SEMICOLON))
+    unique_expr_ptr expr;
+    if (!check(type))
     {
-        condition = expression();
+        expr = expression();
     }
-    expect(TokenType::SEMICOLON, "Expect ';' after loop condition.");
+    
+    expect(type, std::move(msg));
 
-    return condition;
-}
-
-unique_expr_ptr Parser::forIncrement()
-{
-    unique_expr_ptr increment;
-    if (!check(TokenType::RIGHT_PAREN))
-    {
-        increment = expression();
-    }
-    expect(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
-
-    return increment;
+    return expr;
 }
 
 unique_stmt_ptr Parser::forStatement()
@@ -99,8 +88,8 @@ unique_stmt_ptr Parser::forStatement()
      */
     expect(TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
     auto initializer = forInitializer();
-    auto condition = forCondition();
-    auto increment = forIncrement();
+    auto condition = forExpression(TokenType::SEMICOLON, "Expect ';' after loop condition.");
+    auto increment = forExpression(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
     auto body = statement();
 
     return std::make_unique<ForStmt>(std::move(initializer), std::move(condition),
@@ -117,7 +106,7 @@ unique_stmt_ptr Parser::ifStatement()
 
     IfBranch main_branch{std::move(if_condition), std::move(then_statement)};
     std::vector<IfBranch> elif_branches;
-    while (match(TokenType::ELIF))
+    while (match({TokenType::ELIF}))
     {
         expect(TokenType::LEFT_PAREN, "Expect '(' after 'elif'.");
         auto elif_condition = expression();
@@ -127,7 +116,7 @@ unique_stmt_ptr Parser::ifStatement()
     }
 
     unique_stmt_ptr else_branch;
-    if (match(TokenType::ELSE))
+    if (match({TokenType::ELSE}))
     {
         else_branch = statement();
     }
@@ -141,14 +130,14 @@ unique_stmt_ptr Parser::declaration()
     // declaration → varDecl | statement ;
     try
     {
-        if (match(TokenType::VAR))
+        if (match({TokenType::VAR}))
         {
             return varDeclaration();
         }
 
         return statement();
     }
-    catch (const ParseError& error)
+    catch (ParseError&)
     {
         synchronize();
         return nullptr;
@@ -169,10 +158,10 @@ unique_stmt_ptr Parser::varDeclaration()
     // varDeclaration -> IDENTIFIER ("=" expression)? ";" ;
     expect(TokenType::IDENTIFIER, "Expect variable name.");
     auto identifier = previous();
-    auto initializer = match(TokenType::EQUAL) ? expression() : nullptr;
+    auto initializer = match({TokenType::EQUAL}) ? expression() : nullptr;
     expect(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
 
-    return std::make_unique<VarStmt>(identifier, std::move(initializer));
+    return std::make_unique<VarStmt>(std::move(identifier), std::move(initializer));
 }
 
 unique_stmt_ptr Parser::whileStatement()
@@ -214,14 +203,14 @@ unique_expr_ptr Parser::assignment()
     // assignment → IDENTIFIER "=" assignment | logic_or ;
     auto expr = orExpression();
 
-    if (match(TokenType::EQUAL))
+    if (match({TokenType::EQUAL}))
     {
         if (dynamic_cast<VarExpr*>(expr.get()))
         {
             auto value = assignment();
-            auto identifier{static_cast<VarExpr*>(expr.release())->identifier};
+            auto identifier{dynamic_cast<VarExpr*>(expr.release())->identifier};
 
-            return std::make_unique<AssignExpr>(identifier, std::move(value));
+            return std::make_unique<AssignExpr>(std::move(identifier), std::move(value));
         }
 
         Error::addError(previous(), "Invalid assignment target.");
@@ -235,11 +224,11 @@ unique_expr_ptr Parser::orExpression()
     // logic_or -> logic_and ( "or" logic_and )* ;
     auto expr = andExpression();
 
-    while (match(TokenType::OR))
+    while (match({TokenType::OR}))
     {
-        const auto& _operator = previous();
+        auto op = previous();
         auto right = andExpression();
-        expr = std::make_unique<LogicalExpr>(std::move(expr), _operator, std::move(right));
+        expr = std::make_unique<LogicalExpr>(std::move(expr), std::move(op), std::move(right));
     }
 
     return expr;
@@ -250,11 +239,11 @@ unique_expr_ptr Parser::andExpression()
     // logic_and -> equality ( "and" equality )* ;
     auto expr = equality();
 
-    while (match(TokenType::AND))
+    while (match({TokenType::AND}))
     {
-        const auto& _operator = previous();
+        auto op = previous();
         auto right = andExpression();
-        expr = std::make_unique<LogicalExpr>(std::move(expr), _operator, std::move(right));
+        expr = std::make_unique<LogicalExpr>(std::move(expr), std::move(op), std::move(right));
     }
 
     return expr;
@@ -266,76 +255,56 @@ unique_expr_ptr Parser::expression()
     return assignment();
 }
 
-unique_expr_ptr Parser::equality()
+template <typename Fn>
+unique_expr_ptr Parser::binary(Fn func, const std::initializer_list<TokenType>& token_args)
 {
-    // equality -> comparison ( ( "!=" | "==" ) comparison )* ;
-    auto expr = comparison();
+    auto expr = func();
 
-    while (match(TokenType::EXCLAMATION_EQUAL, TokenType::EQUAL_EQUAL))
+    while (match(token_args))
     {
-        const auto& _operator = previous();
-        auto right = comparison();
-        expr = std::make_unique<BinaryExpr>(std::move(expr), _operator, std::move(right));
+        const auto op = previous();
+        auto right = func();
+        expr = std::make_unique<BinaryExpr>(std::move(expr), op, std::move(right));
     }
 
     return expr;
+}
+
+unique_expr_ptr Parser::equality()
+{
+    // equality -> comparison ( ( "!=" | "==" ) comparison )* ;
+    return binary([this]() { return comparison(); },
+                  {TokenType::EXCLAMATION_EQUAL, TokenType::EQUAL_EQUAL});
 }
 
 unique_expr_ptr Parser::comparison()
 {
     // comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-    auto expr = term();
-
-    while (
-        match(TokenType::GREATER, TokenType::GREATER_EQUAL, TokenType::LESS, TokenType::LESS_EQUAL))
-    {
-        const auto& _operator = previous();
-        auto right = term();
-        expr = std::make_unique<BinaryExpr>(std::move(expr), _operator, std::move(right));
-    }
-
-    return expr;
+    return binary([this]() { return term(); }, {TokenType::GREATER, TokenType::GREATER_EQUAL,
+                                                TokenType::LESS, TokenType::LESS_EQUAL});
 }
 
 unique_expr_ptr Parser::term()
 {
     // term -> factor ( (  "-" | "+" ) factor )* ;
-    auto expr = factor();
-
-    while (match(TokenType::MINUS, TokenType::PLUS))
-    {
-        const auto& _operator = previous();
-        auto right = factor();
-        expr = std::make_unique<BinaryExpr>(std::move(expr), _operator, std::move(right));
-    }
-
-    return expr;
+    return binary([this]() { return factor(); }, {TokenType::MINUS, TokenType::PLUS});
 }
 
 unique_expr_ptr Parser::factor()
 {
     // factor → unary ( ( "/" | "*" ) unary )* ;
-    auto expr = unary();
-
-    while (match(TokenType::SLASH, TokenType::STAR))
-    {
-        const auto& _operator = previous();
-        auto right = unary();
-        expr = std::make_unique<BinaryExpr>(std::move(expr), _operator, std::move(right));
-    }
-
-    return expr;
+    return binary([this]() { return unary(); }, {TokenType::SLASH, TokenType::STAR});
 }
 
 unique_expr_ptr Parser::unary()
 {
     // unary -> ( "!" | "-" ) unary | prefix ;
-    if (match(TokenType::EXCLAMATION, TokenType::MINUS))
+    if (match({TokenType::EXCLAMATION, TokenType::MINUS}))
     {
-        const auto& _operator = previous();
+        auto op = previous();
         auto right = unary();
 
-        return std::make_unique<UnaryExpr>(_operator, std::move(right));
+        return std::make_unique<UnaryExpr>(std::move(op), std::move(right));
     }
 
     return prefix();
@@ -344,9 +313,9 @@ unique_expr_ptr Parser::unary()
 unique_expr_ptr Parser::prefix()
 {
     // prefix -> ( "++" | "--" ) prefix | lvalue | postfix;
-    if (match(TokenType::PLUS_PLUS, TokenType::MINUS_MINUS))
+    if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
     {
-        const auto& _operator = previous();
+        auto op = previous();
         auto right = prefix();
         if (dynamic_cast<IncrementExpr*>(right.get()) || dynamic_cast<DecrementExpr*>(right.get()))
         {
@@ -355,12 +324,11 @@ unique_expr_ptr Parser::prefix()
 
         if (!dynamic_cast<VarExpr*>(right.get()))
         {
-            throw error(_operator,
-                        "Operators '++' and '--' must be applied to and lvalue operand.");
+            throw error(op, "Operators '++' and '--' must be applied to and lvalue operand.");
         }
 
-        std::unique_ptr<VarExpr> identifier{static_cast<VarExpr*>(right.release())};
-        if (_operator.type == TokenType::PLUS_PLUS)
+        std::unique_ptr<VarExpr> identifier{dynamic_cast<VarExpr*>(right.release())};
+        if (op.type == TokenType::PLUS_PLUS)
         {
             return std::make_unique<IncrementExpr>(std::move(identifier),
                                                    IncrementExpr::Type::PREFIX);
@@ -380,19 +348,19 @@ unique_expr_ptr Parser::postfix()
     // postfix -> call ( ( "++" | "--" ) lvalue );
     auto expr = call();
 
-    if (!match(TokenType::PLUS_PLUS, TokenType::MINUS_MINUS))
+    if (!match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
     {
         return expr;
     }
 
-    const auto& _operator = previous();
+    const auto& op = previous();
     if (!dynamic_cast<VarExpr*>(expr.get())) // If lvalue doesnt exist
     {
-        throw error(_operator, "Operators '++' and '--' must be applied to and lvalue operand.");
+        throw error(op, "Operators '++' and '--' must be applied to and lvalue operand.");
     }
 
-    std::unique_ptr<VarExpr> identifier{static_cast<VarExpr*>(expr.release())};
-    if (_operator.type == TokenType::PLUS_PLUS)
+    std::unique_ptr<VarExpr> identifier{dynamic_cast<VarExpr*>(expr.release())};
+    if (op.type == TokenType::PLUS_PLUS)
     {
         expr = std::make_unique<IncrementExpr>(std::move(identifier), IncrementExpr::Type::POSTFIX);
     }
@@ -401,7 +369,7 @@ unique_expr_ptr Parser::postfix()
         expr = std::make_unique<DecrementExpr>(std::move(identifier), DecrementExpr::Type::POSTFIX);
     }
 
-    if (match(TokenType::PLUS_PLUS, TokenType::MINUS_MINUS))
+    if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
     {
         throw error(peek(), "Operators '++' and '--' cannot be concatenated.");
     }
@@ -416,7 +384,7 @@ unique_expr_ptr Parser::call()
 
     while (true)
     {
-        if (match(TokenType::LEFT_PAREN))
+        if (match({TokenType::LEFT_PAREN}))
         {
             expr = finishCall(std::move(expr));
         }
@@ -445,41 +413,41 @@ unique_expr_ptr Parser::primary()
      * primary  -> LIST | NUMBER | STRING | "true" | "false" | "nil"
      *             IDENTIFIER |  "(" expression ")" ;
      */
-    // if (match(TokenType::LEFT_BRACKET))
+    // if (match({TokenType::LEFT_BRACKET}))
     // {
     //     return list();
     // }
-    if (match(NUMBER))
+    if (match({NUMBER}))
     {
         return std::make_unique<LiteralExpr>(std::strtod(previous().lexeme.c_str(), nullptr));
     }
 
-    if (match(STRING))
+    if (match({STRING}))
     {
         return std::make_unique<LiteralExpr>(previous().lexeme);
     }
 
-    if (match(_FALSE))
+    if (match({_FALSE}))
     {
         return std::make_unique<LiteralExpr>(false);
     }
 
-    if (match(_TRUE))
+    if (match({_TRUE}))
     {
         return std::make_unique<LiteralExpr>(true);
     }
 
-    if (match(NIL))
+    if (match({NIL}))
     {
         return std::make_unique<LiteralExpr>(std::any{});
     }
 
-    if (match(IDENTIFIER))
+    if (match({IDENTIFIER}))
     {
         return std::make_unique<VarExpr>(previous());
     }
 
-    if (match(LEFT_PAREN))
+    if (match({LEFT_PAREN}))
     {
         auto expr = expression();
         expect(RIGHT_PAREN, "Expect ')' after expression.");
@@ -489,11 +457,10 @@ unique_expr_ptr Parser::primary()
     throw error(peek(), "Expect expression.");
 }
 
-template <typename... Args>
-bool Parser::match(Args... args)
+bool Parser::match(const std::initializer_list<TokenType> token_args)
 {
-    std::initializer_list<bool> results{check(args)...};
-    bool is_match = std::ranges::any_of(results.begin(), results.end(), [](bool x) { return x; });
+    bool is_match = std::ranges::any_of(token_args.begin(), token_args.end(),
+                                        [this](TokenType x) { return check(x); });
     if (is_match)
     {
         advance();
@@ -512,7 +479,7 @@ void Parser::expect(TokenType type, std::string msg)
     advance();
 }
 
-bool Parser::check(TokenType type)
+bool Parser::check(TokenType type) const
 {
     if (isAtEnd())
     {
@@ -530,17 +497,17 @@ void Parser::advance()
     }
 }
 
-bool Parser::isAtEnd()
+bool Parser::isAtEnd() const
 {
     return peek().type == TokenType::_EOF;
 }
 
-Token& Parser::peek()
+const Token& Parser::peek() const
 {
     return tokens[current];
 }
 
-Token& Parser::previous()
+const Token& Parser::previous() const
 {
     return tokens[current - 1];
 }
@@ -548,7 +515,7 @@ Token& Parser::previous()
 Parser::ParseError Parser::error(const Token& token, std::string msg) const
 {
     Error::addError(token, std::move(msg));
-    return ParseError();
+    return {};
 }
 
 void Parser::synchronize()

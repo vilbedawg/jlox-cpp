@@ -11,7 +11,7 @@ struct AssignExpr : Expr
     Token identifier;
     unique_expr_ptr value;
 
-    AssignExpr(const Token& identifier, unique_expr_ptr value);
+    AssignExpr(Token identifier, unique_expr_ptr value);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -21,7 +21,7 @@ struct BinaryExpr : Expr
     Token op;
     unique_expr_ptr right;
 
-    BinaryExpr(unique_expr_ptr left, const Token& op, unique_expr_ptr right);
+    BinaryExpr(unique_expr_ptr left, Token op, unique_expr_ptr right);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -30,7 +30,7 @@ struct UnaryExpr : Expr
     Token op;
     unique_expr_ptr right;
 
-    UnaryExpr(const Token& op, unique_expr_ptr right);
+    UnaryExpr(Token op, unique_expr_ptr right);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -70,7 +70,7 @@ struct CallExpr : Expr
     Token paren;
     std::vector<unique_expr_ptr> args;
 
-    CallExpr(unique_expr_ptr callee, const Token& paren, std::vector<unique_expr_ptr> args);
+    CallExpr(unique_expr_ptr callee, Token paren, std::vector<unique_expr_ptr> args);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -79,7 +79,7 @@ struct GetExpr : Expr
     unique_expr_ptr object;
     Token identifier;
 
-    GetExpr(unique_expr_ptr object, const Token& identifier);
+    GetExpr(unique_expr_ptr object, Token identifier);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -89,7 +89,7 @@ struct SetExpr : Expr
     Token identifier;
     unique_expr_ptr value;
 
-    SetExpr(unique_expr_ptr object, const Token& identifier, unique_expr_ptr value);
+    SetExpr(unique_expr_ptr object, Token identifier, unique_expr_ptr value);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -115,7 +115,7 @@ struct LogicalExpr : Expr
     Token op;
     unique_expr_ptr right;
 
-    LogicalExpr(unique_expr_ptr left, const Token& op, unique_expr_ptr right);
+    LogicalExpr(unique_expr_ptr left, Token op, unique_expr_ptr right);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -124,7 +124,7 @@ struct SuperExpr : Expr
     Token keyword;
     Token method;
 
-    SuperExpr(const Token& keyword, const Token& method);
+    SuperExpr(Token keyword, Token method);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -132,7 +132,7 @@ struct ThisExpr : Expr
 {
     Token keyword;
 
-    explicit ThisExpr(const Token& keyword);
+    explicit ThisExpr(Token keyword);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -140,7 +140,7 @@ struct VarExpr : Expr
 {
     Token identifier;
 
-    explicit VarExpr(const Token& identifier);
+    explicit VarExpr(Token identifier);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
@@ -149,7 +149,7 @@ struct ListExpr : Expr
     Token opening_bracket;
     std::vector<unique_expr_ptr> items;
 
-    ListExpr(const Token& opening_bracket, std::vector<unique_expr_ptr> items);
+    ListExpr(Token opening_bracket, std::vector<unique_expr_ptr> items);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 

@@ -12,7 +12,7 @@ namespace Error
         hadRuntimeError = true;
     }
 
-    void addError(const unsigned int line, std::string where, std::string message) noexcept
+    void addError(unsigned int line, std::string where, std::string message) noexcept
     {
         exceptionList.emplace_back(line, std::move(where), std::move(message));
         hadError = true;
@@ -42,4 +42,4 @@ namespace Error
                       << '\n';
         }
     }
-};
+}

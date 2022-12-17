@@ -7,7 +7,7 @@
 class Lexer
 {
 public:
-    explicit Lexer(std::string_view source);
+    explicit Lexer(std::string source);
     std::vector<Token> scanTokens();
 
 private:
@@ -19,10 +19,10 @@ private:
     static const std::unordered_map<std::string, TokenType> keywords;
 
     bool isEOF() const;
-    bool isDigit(const char c) const;
-    bool isAlpha(const char c) const;
-    bool isAlphaNumeric(const char c) const;
-    bool match(const char expected);
+    bool isDigit(char c) const;
+    bool isAlpha(char c) const;
+    bool isAlphaNumeric(char c) const;
+    bool match(char expected);
     std::string getLexeme(TokenType type) const;
 
     void advance();
@@ -36,4 +36,4 @@ private:
     void identifier();
 };
 
-#endif // BIS_LEXER__HPP
+#endif // BIS_LEXER_HPP

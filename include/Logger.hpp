@@ -23,12 +23,11 @@ namespace Error
 
     void report() noexcept;
     void addRuntimeError(const RuntimeError& error) noexcept;
-    void addError(const unsigned int line, const std::string where,
-                  const std::string message) noexcept;
+    void addError(unsigned int line, std::string where, std::string message) noexcept;
     void addError(const Token& token, std::string message) noexcept;
     extern bool hadError;
     extern bool hadRuntimeError;
     extern std::vector<ErrorInfo> exceptionList;
-};
+}
 
 #endif // LOGGER_HPP

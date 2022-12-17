@@ -48,27 +48,28 @@ private:
     unique_stmt_ptr whileStatement();
     unique_stmt_ptr forStatement();
     unique_stmt_ptr forInitializer();
-    unique_expr_ptr forCondition();
-    unique_expr_ptr forIncrement();
+    unique_expr_ptr forExpression(TokenType type, std::string msg);
 
-    template <typename... Args>
-    bool match(Args... args);
+    template <typename Fn>
+    unique_expr_ptr binary(Fn func, const std::initializer_list<TokenType>& token_args);
 
-    bool check(TokenType type);
-    bool isAtEnd();
+    bool match(const std::initializer_list<TokenType> args);
+    bool check(TokenType type) const;
+    bool isAtEnd() const;
     void synchronize();
     void advance();
-
     void expect(TokenType type, std::string msg);
-    Token& peek();
-    Token& previous();
+
+    const Token& peek() const;
+    const Token& previous() const;
 
     class ParseError : public std::runtime_error
     {
     public:
         ParseError() : std::runtime_error("") {}
     };
-    ParseError error(const Token& token, const std::string message) const;
+
+    ParseError error(const Token& token, std::string message) const;
 };
 
 #endif // BIS_PARSER_HPP

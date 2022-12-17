@@ -23,21 +23,25 @@ std::string readFile(std::string_view filename)
     return file_contents;
 }
 
-void run(std::string_view source)
+void run(const std::string& source)
 {
-    Interpreter interpreter;
     Lexer lexer{source};
-    Parser parser{lexer.scanTokens()};
+    auto tokens = lexer.scanTokens();
+
+    Parser parser{std::move(tokens)};
     const auto statements = parser.parse();
+
     if (Error::hadError || Error::hadRuntimeError)
     {
         Error::report();
         return;
     }
+
+    Interpreter interpreter;
     interpreter.interpret(statements);
 }
 
-void initFile(std::string_view filename)
+void initFile(const std::string& filename)
 {
     std::string file_contents = readFile(filename);
     run(file_contents);

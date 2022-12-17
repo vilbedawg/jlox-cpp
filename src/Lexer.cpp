@@ -10,7 +10,7 @@ const std::unordered_map<std::string, TokenType> Lexer::keywords{
     {"this", TokenType::THIS},    {"var", TokenType::VAR},       {"lambda", TokenType::LAMBDA},
     {"break", TokenType::BREAK}};
 
-Lexer::Lexer(std::string_view source) : source{source}
+Lexer::Lexer(std::string source) : source{std::move(source)}
 {
 }
 
@@ -181,7 +181,7 @@ void Lexer::string()
     addToken(TokenType::STRING);
 }
 
-bool Lexer::match(const char expected)
+bool Lexer::match(char expected)
 {
     if (isEOF() || source.at(current) != expected)
     {
@@ -202,17 +202,17 @@ char Lexer::peekNext() const
     return (current + 1 >= source.length()) ? '\0' : source.at(current + 1);
 }
 
-bool Lexer::isAlpha(const char c) const
+bool Lexer::isAlpha(char c) const
 {
     return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_'));
 }
 
-bool Lexer::isAlphaNumeric(const char c) const
+bool Lexer::isAlphaNumeric(char c) const
 {
     return isAlpha(c) || isDigit(c);
 }
 
-bool Lexer::isDigit(const char c) const
+bool Lexer::isDigit(char c) const
 {
     return c >= '0' && c <= '9';
 }

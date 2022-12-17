@@ -14,4 +14,4 @@ struct Token
 std::ostream& operator<<(std::ostream& os, const Token& token);
 std::ostream& operator<<(std::ostream& os, const TokenType type);
 
-#endif // BIS_TYPES_TOKEN_HPP
+#endif // BIS_TOKEN_HPP

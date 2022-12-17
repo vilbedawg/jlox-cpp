@@ -1,5 +1,6 @@
 #include "../include/Stmt.hpp"
 #include <cassert>
+#include <utility>
 
 BlockStmt::BlockStmt(std::vector<unique_stmt_ptr> statements) : statements{std::move(statements)}
 {
@@ -10,9 +11,10 @@ void BlockStmt::accept(StmtVisitor& visitor) const
     visitor.visit(*this);
 }
 
-ClassStmt::ClassStmt(const Token& identifier, std::vector<std::unique_ptr<FnStmt>> methods,
+ClassStmt::ClassStmt(Token identifier, std::vector<std::unique_ptr<FnStmt>> methods,
                      std::unique_ptr<VarExpr> superclass)
-    : identifier{identifier}, superclass{std::move(superclass)}, methods{std::move(methods)}
+    : identifier{std::move(identifier)}, superclass{std::move(superclass)}, methods{
+                                                                                std::move(methods)}
 {
     assert(this->identifier.type == TokenType::IDENTIFIER);
 }
@@ -32,9 +34,8 @@ void ExprStmt::accept(StmtVisitor& visitor) const
     visitor.visit(*this);
 }
 
-FnStmt::FnStmt(const Token& identifier, std::vector<Token> params,
-               std::vector<unique_stmt_ptr> body)
-    : identifier{identifier}, params{std::move(params)}, body{std::move(body)}
+FnStmt::FnStmt(Token identifier, std::vector<Token> params, std::vector<unique_stmt_ptr> body)
+    : identifier{std::move(identifier)}, params{std::move(params)}, body{std::move(body)}
 {
     assert(this->identifier.type == TokenType::IDENTIFIER);
 }
@@ -74,8 +75,8 @@ void PrintStmt::accept(StmtVisitor& visitor) const
     visitor.visit(*this);
 }
 
-ReturnStmt::ReturnStmt(const Token& keyword, unique_expr_ptr expr)
-    : keyword{keyword}, expression{std::move(expr)}
+ReturnStmt::ReturnStmt(Token keyword, unique_expr_ptr expr)
+    : keyword{std::move(keyword)}, expression{std::move(expr)}
 {
     assert(keyword.type == TokenType::RETURN);
 }
@@ -85,7 +86,7 @@ void ReturnStmt::accept(StmtVisitor& visitor) const
     visitor.visit(*this);
 }
 
-BreakStmt::BreakStmt(const Token& keyword) : keyword{keyword}
+BreakStmt::BreakStmt(Token keyword) : keyword{std::move(keyword)}
 {
     assert(this->keyword.type == TokenType::BREAK);
 }
@@ -95,8 +96,8 @@ void BreakStmt::accept(StmtVisitor& visitor) const
     visitor.visit(*this);
 }
 
-VarStmt::VarStmt(const Token& identifier, unique_expr_ptr initializer)
-    : identifier{identifier}, initializer{std::move(initializer)}
+VarStmt::VarStmt(Token identifier, unique_expr_ptr initializer)
+    : identifier{std::move(identifier)}, initializer{std::move(initializer)}
 {
     assert(this->identifier.type == TokenType::IDENTIFIER);
 }
@@ -120,8 +121,10 @@ void WhileStmt::accept(StmtVisitor& visitor) const
 
 ForStmt::ForStmt(unique_stmt_ptr initializer, unique_expr_ptr condition, unique_expr_ptr increment,
                  unique_stmt_ptr body)
-    : initializer{std::move(initializer)}, condition{std::move(condition)},
-      increment{std::move(increment)}, body{std::move(body)}
+    : initializer{std::move(initializer)}, //
+      condition{std::move(condition)},     //
+      increment{std::move(increment)},     //
+      body{std::move(body)}
 {
     // assert(this->initializer != nullptr);
     // assert(this->condition != nullptr);

@@ -21,7 +21,7 @@ struct ClassStmt : Stmt
     std::unique_ptr<VarExpr> superclass; // OPTIONAL
     std::vector<std::unique_ptr<FnStmt>> methods;
 
-    ClassStmt(const Token& identifier, std::vector<std::unique_ptr<FnStmt>> methods,
+    ClassStmt(Token identifier, std::vector<std::unique_ptr<FnStmt>> methods,
               std::unique_ptr<VarExpr> superclass);
     void accept(StmtVisitor& visitor) const override;
 };
@@ -40,7 +40,7 @@ struct FnStmt : Stmt
     std::vector<Token> params;
     std::vector<unique_stmt_ptr> body;
 
-    FnStmt(const Token& identifier, std::vector<Token> params, std::vector<unique_stmt_ptr> body);
+    FnStmt(Token identifier, std::vector<Token> params, std::vector<unique_stmt_ptr> body);
     void accept(StmtVisitor& visitor) const override;
 };
 
@@ -75,7 +75,7 @@ struct ReturnStmt : Stmt
     Token keyword;
     unique_expr_ptr expression; // OPTIONAL
 
-    explicit ReturnStmt(const Token& keyword, unique_expr_ptr expr);
+    explicit ReturnStmt(Token keyword, unique_expr_ptr expr);
     void accept(StmtVisitor& visitor) const override;
 };
 
@@ -83,7 +83,7 @@ struct BreakStmt : Stmt
 {
     Token keyword;
 
-    explicit BreakStmt(const Token& keyword);
+    explicit BreakStmt(Token keyword);
     void accept(StmtVisitor& visitor) const override;
 };
 
@@ -92,7 +92,7 @@ struct VarStmt : Stmt
     Token identifier;
     unique_expr_ptr initializer; // OPTIONAL
 
-    VarStmt(const Token& identifier, unique_expr_ptr initializer);
+    VarStmt(Token identifier, unique_expr_ptr initializer);
     void accept(StmtVisitor& visitor) const override;
 };
 

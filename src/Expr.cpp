@@ -1,8 +1,9 @@
 #include "../include/Expr.hpp"
 #include <cassert>
+#include <utility>
 
-AssignExpr::AssignExpr(const Token& identifier, unique_expr_ptr value)
-    : identifier{identifier}, value{std::move(value)}
+AssignExpr::AssignExpr(Token identifier, unique_expr_ptr value)
+    : identifier{std::move(identifier)}, value{std::move(value)}
 {
     assert(this->value != nullptr);
 }
@@ -12,8 +13,8 @@ std::any AssignExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-BinaryExpr::BinaryExpr(unique_expr_ptr left, const Token& op, unique_expr_ptr right)
-    : left{std::move(left)}, op{op}, right{std::move(right)}
+BinaryExpr::BinaryExpr(unique_expr_ptr left, Token op, unique_expr_ptr right)
+    : left{std::move(left)}, op{std::move(op)}, right{std::move(right)}
 {
     assert(this->left != nullptr);
     assert(this->right != nullptr);
@@ -24,7 +25,7 @@ std::any BinaryExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-UnaryExpr::UnaryExpr(const Token& op, unique_expr_ptr right) : op{op}, right{std::move(right)}
+UnaryExpr::UnaryExpr(Token op, unique_expr_ptr right) : op{std::move(op)}, right{std::move(right)}
 {
     assert(this->right != nullptr);
 }
@@ -56,8 +57,8 @@ std::any DecrementExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-CallExpr::CallExpr(unique_expr_ptr callee, const Token& paren, std::vector<unique_expr_ptr> args)
-    : callee{std::move(callee)}, paren{paren}, args{std::move(args)}
+CallExpr::CallExpr(unique_expr_ptr callee, Token paren, std::vector<unique_expr_ptr> args)
+    : callee{std::move(callee)}, paren{std::move(paren)}, args{std::move(args)}
 {
     assert(paren.type == TokenType::RIGHT_PAREN);
 }
@@ -67,8 +68,8 @@ std::any CallExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-GetExpr::GetExpr(unique_expr_ptr object, const Token& identifier)
-    : object{std::move(object)}, identifier{identifier}
+GetExpr::GetExpr(unique_expr_ptr object, Token identifier)
+    : object{std::move(object)}, identifier{std::move(identifier)}
 {
 }
 
@@ -77,8 +78,8 @@ std::any GetExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-SetExpr::SetExpr(unique_expr_ptr object, const Token& identifier, unique_expr_ptr value)
-    : object{std::move(object)}, identifier{identifier}, value{std::move(value)}
+SetExpr::SetExpr(unique_expr_ptr object, Token identifier, unique_expr_ptr value)
+    : object{std::move(object)}, identifier{std::move(identifier)}, value{std::move(value)}
 {
 }
 
@@ -106,8 +107,8 @@ std::any LiteralExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-LogicalExpr::LogicalExpr(unique_expr_ptr left, const Token& op, unique_expr_ptr right)
-    : left{std::move(left)}, op{op}, right{std::move(right)}
+LogicalExpr::LogicalExpr(unique_expr_ptr left, Token op, unique_expr_ptr right)
+    : left{std::move(left)}, op{std::move(op)}, right{std::move(right)}
 {
     assert(this->left != nullptr);
     assert(this->right != nullptr);
@@ -119,7 +120,8 @@ std::any LogicalExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-SuperExpr::SuperExpr(const Token& keyword, const Token& method) : keyword{keyword}, method{method}
+SuperExpr::SuperExpr(Token keyword, Token method)
+    : keyword{std::move(keyword)}, method{std::move(method)}
 {
 }
 
@@ -128,7 +130,7 @@ std::any SuperExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-ThisExpr::ThisExpr(const Token& keyword) : keyword{keyword}
+ThisExpr::ThisExpr(Token keyword) : keyword{std::move(keyword)}
 {
     assert(this->keyword.type == TokenType::THIS);
 }
@@ -138,7 +140,7 @@ std::any ThisExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-VarExpr::VarExpr(const Token& identifier) : identifier{identifier}
+VarExpr::VarExpr(Token identifier) : identifier{std::move(identifier)}
 {
 }
 
@@ -147,8 +149,8 @@ std::any VarExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-ListExpr::ListExpr(const Token& opening_bracket, std::vector<unique_expr_ptr> items)
-    : opening_bracket{opening_bracket}, items{std::move(items)}
+ListExpr::ListExpr(Token opening_bracket, std::vector<unique_expr_ptr> items)
+    : opening_bracket{std::move(opening_bracket)}, items{std::move(items)}
 {
 }
 
