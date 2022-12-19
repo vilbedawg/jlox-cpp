@@ -49,6 +49,7 @@ private:
     unique_stmt_ptr forStatement();
     unique_stmt_ptr forInitializer();
     unique_expr_ptr forExpression(TokenType type, std::string msg);
+    unique_stmt_ptr breakExpression();
 
     template <typename Fn>
     unique_expr_ptr binary(Fn func, const std::initializer_list<TokenType>& token_args);

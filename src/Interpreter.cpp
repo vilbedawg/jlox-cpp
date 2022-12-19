@@ -1,4 +1,5 @@
 #include "../include/Interpreter.hpp"
+#include "../include/Break.hpp"
 #include "../include/Logger.hpp"
 
 Interpreter::Interpreter()
@@ -16,11 +17,16 @@ void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
             execute(*ptr);
         }
     }
+    catch (const BreakStatement& error)
+    {
+        Error::addRuntimeError(error);
+    }
     catch (const RuntimeError& error)
     {
         Error::addRuntimeError(error);
-        Error::report();
     }
+
+    Error::report();
 }
 
 std::string Interpreter::stringify(std::any& object) const
@@ -198,6 +204,7 @@ void Interpreter::visit(const ReturnStmt& stmt)
 
 void Interpreter::visit(const BreakStmt& stmt)
 {
+    throw BreakStatement(stmt.keyword);
 }
 
 void Interpreter::visit(const VarStmt& stmt)
@@ -213,9 +220,16 @@ void Interpreter::visit(const VarStmt& stmt)
 
 void Interpreter::visit(const WhileStmt& stmt)
 {
-    while (isTruthy(evaluate(*stmt.condition)))
+    try
     {
-        execute(*stmt.body);
+        while (isTruthy(evaluate(*stmt.condition)))
+        {
+            execute(*stmt.body);
+        }
+    }
+    catch (const BreakStatement&)
+    {
+        return;
     }
 }
 
@@ -234,13 +248,20 @@ void Interpreter::visit(const ForStmt& stmt)
         return;
     }
 
-    while (isTruthy(evaluate(*stmt.condition)))
+    try
     {
-        execute(*stmt.body);
-        if (stmt.increment)
+        while (isTruthy(evaluate(*stmt.condition)))
         {
-            evaluate(*stmt.increment);
+            execute(*stmt.body);
+            if (stmt.increment)
+            {
+                evaluate(*stmt.increment);
+            }
         }
+    }
+    catch (const BreakStatement&)
+    {
+        return;
     }
 }
 

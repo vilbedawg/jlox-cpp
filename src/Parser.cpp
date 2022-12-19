@@ -46,8 +46,17 @@ unique_stmt_ptr Parser::statement()
         return whileStatement();
     if (match({TokenType::LEFT_BRACE}))
         return std::make_unique<BlockStmt>(block());
+    if (match({TokenType::BREAK}))
+        return breakExpression();
 
     return expressionStatement();
+}
+
+unique_stmt_ptr Parser::breakExpression()
+{
+    auto token = previous();
+    expect(TokenType::SEMICOLON, "Expect ';' after break.");
+    return std::make_unique<BreakStmt>(token);
 }
 
 unique_stmt_ptr Parser::forInitializer()
@@ -73,7 +82,7 @@ unique_expr_ptr Parser::forExpression(TokenType type, std::string msg)
     {
         expr = expression();
     }
-    
+
     expect(type, std::move(msg));
 
     return expr;
