@@ -53,6 +53,7 @@ struct IfStmt;
 struct PrintStmt;
 struct ReturnStmt;
 struct BreakStmt;
+struct ContinueStmt;
 struct VarStmt;
 struct WhileStmt;
 struct ForStmt;
@@ -67,6 +68,7 @@ struct StmtVisitor
     virtual void visit(const PrintStmt& stmt) = 0;
     virtual void visit(const ReturnStmt& stmt) = 0;
     virtual void visit(const BreakStmt& stmt) = 0;
+    virtual void visit(const ContinueStmt& stmt) = 0;
     virtual void visit(const VarStmt& stmt) = 0;
     virtual void visit(const WhileStmt& stmt) = 0;
     virtual void visit(const ForStmt& stmt) = 0;

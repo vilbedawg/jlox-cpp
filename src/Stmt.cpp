@@ -96,6 +96,16 @@ void BreakStmt::accept(StmtVisitor& visitor) const
     visitor.visit(*this);
 }
 
+ContinueStmt::ContinueStmt(Token keyword) : keyword{std::move(keyword)}
+{
+    assert(this->keyword.type == TokenType::CONTINUE);
+}
+
+void ContinueStmt::accept(StmtVisitor& visitor) const
+{
+    visitor.visit(*this);
+}
+
 VarStmt::VarStmt(Token identifier, unique_expr_ptr initializer)
     : identifier{std::move(identifier)}, initializer{std::move(initializer)}
 {

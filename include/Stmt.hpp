@@ -79,6 +79,14 @@ struct ReturnStmt : Stmt
     void accept(StmtVisitor& visitor) const override;
 };
 
+struct ContinueStmt : Stmt
+{
+    Token keyword;
+
+    explicit ContinueStmt(Token keyword);
+    void accept(StmtVisitor& visitor) const override;
+};
+
 struct BreakStmt : Stmt
 {
     Token keyword;

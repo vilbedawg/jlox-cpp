@@ -46,17 +46,29 @@ unique_stmt_ptr Parser::statement()
         return whileStatement();
     if (match({TokenType::LEFT_BRACE}))
         return std::make_unique<BlockStmt>(block());
-    if (match({TokenType::BREAK}))
-        return breakExpression();
+    if (match({TokenType::BREAK, TokenType::CONTINUE}))
+        return controlExpression();
 
     return expressionStatement();
 }
 
-unique_stmt_ptr Parser::breakExpression()
+unique_stmt_ptr Parser::controlExpression()
 {
     auto token = previous();
-    expect(TokenType::SEMICOLON, "Expect ';' after break.");
-    return std::make_unique<BreakStmt>(token);
+    unique_stmt_ptr stmt;
+    if (token.type == TokenType::BREAK)
+    {
+        expect(TokenType::SEMICOLON, "Expect ';' after break.");
+        stmt = std::make_unique<BreakStmt>(std::move(token));
+    }
+
+    else if (token.type == TokenType::CONTINUE)
+    {
+        expect(TokenType::SEMICOLON, "Expect ';' after continue.");
+        stmt = std::make_unique<ContinueStmt>(std::move(token));
+    }
+
+    return stmt;
 }
 
 unique_stmt_ptr Parser::forInitializer()

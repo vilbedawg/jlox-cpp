@@ -63,6 +63,7 @@ private:
     void visit(const PrintStmt& stmt) override;
     void visit(const ReturnStmt& stmt) override;
     void visit(const BreakStmt& stmt) override;
+    void visit(const ContinueStmt& stmt) override;
     void visit(const VarStmt& stmt) override;
     void visit(const WhileStmt& stmt) override;
     void visit(const ForStmt& stmt) override;

@@ -2,13 +2,16 @@
 #include "../include/Logger.hpp"
 
 const std::unordered_map<std::string, TokenType> Lexer::keywords{
-    {"and", TokenType::AND},      {"or", TokenType::OR},         {"class", TokenType::CLASS},
-    {"if", TokenType::IF},        {"else", TokenType::ELSE},     {"elif", TokenType::ELIF},
-    {"false", TokenType::_FALSE}, {"true", TokenType::_TRUE},    {"fn", TokenType::FN},
-    {"for", TokenType::FOR},      {"while", TokenType::WHILE},   {"nil", TokenType::NIL},
-    {"print", TokenType::PRINT},  {"return", TokenType::RETURN}, {"super", TokenType::SUPER},
-    {"this", TokenType::THIS},    {"var", TokenType::VAR},       {"lambda", TokenType::LAMBDA},
-    {"break", TokenType::BREAK}};
+    {"and", TokenType::AND},      {"or", TokenType::OR},
+    {"class", TokenType::CLASS},  {"if", TokenType::IF},
+    {"else", TokenType::ELSE},    {"elif", TokenType::ELIF},
+    {"false", TokenType::_FALSE}, {"true", TokenType::_TRUE},
+    {"fn", TokenType::FN},        {"for", TokenType::FOR},
+    {"while", TokenType::WHILE},  {"nil", TokenType::NIL},
+    {"print", TokenType::PRINT},  {"return", TokenType::RETURN},
+    {"super", TokenType::SUPER},  {"this", TokenType::THIS},
+    {"var", TokenType::VAR},      {"lambda", TokenType::LAMBDA},
+    {"break", TokenType::BREAK},  {"continue", TokenType::CONTINUE}};
 
 Lexer::Lexer(std::string source) : source{std::move(source)}
 {

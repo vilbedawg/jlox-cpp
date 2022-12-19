@@ -1,6 +1,6 @@
 #include "../include/Interpreter.hpp"
-#include "../include/Break.hpp"
 #include "../include/Logger.hpp"
+#include "../include/RuntimeException.hpp"
 
 Interpreter::Interpreter()
 {
@@ -16,10 +16,6 @@ void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
             assert(ptr != nullptr);
             execute(*ptr);
         }
-    }
-    catch (const BreakStatement& error)
-    {
-        Error::addRuntimeError(error);
     }
     catch (const RuntimeError& error)
     {
@@ -204,7 +200,12 @@ void Interpreter::visit(const ReturnStmt& stmt)
 
 void Interpreter::visit(const BreakStmt& stmt)
 {
-    throw BreakStatement(stmt.keyword);
+    throw BreakException(stmt.keyword);
+}
+
+void Interpreter::visit(const ContinueStmt& stmt)
+{
+    throw ContinueException(stmt.keyword);
 }
 
 void Interpreter::visit(const VarStmt& stmt)
@@ -220,16 +221,20 @@ void Interpreter::visit(const VarStmt& stmt)
 
 void Interpreter::visit(const WhileStmt& stmt)
 {
-    try
+    while (isTruthy(evaluate(*stmt.condition)))
     {
-        while (isTruthy(evaluate(*stmt.condition)))
+        try
         {
             execute(*stmt.body);
         }
-    }
-    catch (const BreakStatement&)
-    {
-        return;
+        catch (const ContinueException&)
+        {
+            // Continue.
+        }
+        catch (const BreakException&)
+        {
+            return;
+        }
     }
 }
 
@@ -237,6 +242,7 @@ void Interpreter::visit(const ForStmt& stmt)
 {
     auto current = std::make_unique<Environment>(environment.get());
     ScopedEnvironment new_env{*this, std::move(current)};
+    // for (var i = 0; i < 10; i++) { if (i > 5) { continue; } print i; }
 
     if (stmt.initializer)
     {
@@ -248,9 +254,9 @@ void Interpreter::visit(const ForStmt& stmt)
         return;
     }
 
-    try
+    while (isTruthy(evaluate(*stmt.condition)))
     {
-        while (isTruthy(evaluate(*stmt.condition)))
+        try
         {
             execute(*stmt.body);
             if (stmt.increment)
@@ -258,10 +264,17 @@ void Interpreter::visit(const ForStmt& stmt)
                 evaluate(*stmt.increment);
             }
         }
-    }
-    catch (const BreakStatement&)
-    {
-        return;
+        catch (const BreakException&)
+        {
+            return;
+        }
+        catch (const ContinueException&)
+        {
+            if (stmt.increment)
+            {
+                evaluate(*stmt.increment);
+            }
+        }
     }
 }
 

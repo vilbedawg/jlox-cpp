@@ -1,4 +1,3 @@
-#include "../include/AstPrinter.hpp"
 #include "../include/Interpreter.hpp"
 #include "../include/Lexer.hpp"
 #include "../include/Logger.hpp"
