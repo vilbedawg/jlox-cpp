@@ -47,12 +47,12 @@ unique_stmt_ptr Parser::statement()
     if (match({TokenType::LEFT_BRACE}))
         return std::make_unique<BlockStmt>(block());
     if (match({TokenType::BREAK, TokenType::CONTINUE}))
-        return controlExpression();
+        return controlStatement();
 
     return expressionStatement();
 }
 
-unique_stmt_ptr Parser::controlExpression()
+unique_stmt_ptr Parser::controlStatement()
 {
     auto token = previous();
     unique_stmt_ptr stmt;
@@ -148,13 +148,13 @@ unique_stmt_ptr Parser::ifStatement()
 
 unique_stmt_ptr Parser::declaration()
 {
-    // declaration → varDecl | statement ;
+    // declaration -> fnDecl | varDecl | statement ;
     try
     {
         if (match({TokenType::VAR}))
-        {
             return varDeclaration();
-        }
+        if (match({TokenType::FN}))
+            return function("function");
 
         return statement();
     }
@@ -203,6 +203,33 @@ unique_stmt_ptr Parser::expressionStatement()
     expect(TokenType::SEMICOLON, "Expect ';' after value.");
 
     return std::make_unique<ExprStmt>(std::move(expr));
+}
+
+unique_stmt_ptr Parser::function(const std::string& kind)
+{
+    auto identifier = previous();
+    expect(TokenType::LEFT_PAREN, "Expect '(' after " + kind + " name.");
+
+    std::vector<Token> params;
+    if (!check(TokenType::RIGHT_PAREN))
+    {
+        do
+        {
+            if (params.size() > 254)
+            {
+                error(peek(), "Can't exceed more than 254 parameters.");
+            }
+
+            params.emplace_back(previous());
+            expect(TokenType::IDENTIFIER, "Expect parameter name.");
+        } while (match({TokenType::COMMA}));
+    }
+
+    expect(TokenType::IDENTIFIER, "Expect ')' after parameters.");
+
+    expect(TokenType::LEFT_BRACE, "Expect '{' before " + kind + " body.");
+    auto body = block();
+    return std::make_unique<FnStmt>(std::move(identifier), std::move(params), std::move(body));
 }
 
 std::vector<unique_stmt_ptr> Parser::block()
@@ -420,6 +447,24 @@ unique_expr_ptr Parser::call()
 
 unique_expr_ptr Parser::finishCall(unique_expr_ptr callee)
 {
+    std::vector<unique_expr_ptr> arguments;
+    if (!check(TokenType::RIGHT_PAREN))
+    {
+        do
+        {
+            if (arguments.size() >= 255)
+            {
+                error(peek(), "Argument limit exceeded. Can't have more than 255 arguments.");
+            }
+
+            arguments.emplace_back(expression());
+        } while (match({TokenType::COMMA}));
+
+        auto paren = previous();
+        expect(TokenType::RIGHT_PAREN, "Except ')' after arguments.");
+        return std::make_unique<CallExpr>(std::move(callee), std::move(paren),
+                                          std::move(arguments));
+    }
 }
 
 // unique_expr_ptr Parser::list()

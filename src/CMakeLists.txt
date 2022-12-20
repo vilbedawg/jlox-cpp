@@ -9,7 +9,6 @@ target_include_directories(BIS
 
 target_sources(BIS
         PUBLIC
-        AstPrinter.cpp
         Expr.cpp
         Lexer.cpp
         Logger.cpp
@@ -18,6 +17,8 @@ target_sources(BIS
         Token.cpp
         Interpreter.cpp
         Environment.cpp
+        BisFunction.cpp
+        ClockCallable.cpp
         )
 
 add_executable(main main.cpp)

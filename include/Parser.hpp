@@ -19,7 +19,7 @@ public:
 
 private:
     std::vector<Token> tokens;
-    unsigned int current{0};
+    unsigned int current = 0;
 
     unique_expr_ptr expression();
     unique_expr_ptr equality();
@@ -31,6 +31,7 @@ private:
     unique_expr_ptr term();
     unique_expr_ptr factor();
     unique_expr_ptr unary();
+
     unique_expr_ptr call();
     unique_expr_ptr finishCall(unique_expr_ptr callee);
     unique_expr_ptr primary();
@@ -48,8 +49,10 @@ private:
     unique_stmt_ptr whileStatement();
     unique_stmt_ptr forStatement();
     unique_stmt_ptr forInitializer();
+    unique_stmt_ptr controlStatement();
     unique_expr_ptr forExpression(TokenType type, std::string msg);
-    unique_stmt_ptr controlExpression();
+
+    unique_stmt_ptr function(const std::string& kind);
 
     template <typename Fn>
     unique_expr_ptr binary(Fn func, const std::initializer_list<TokenType>& token_args);

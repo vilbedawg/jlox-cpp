@@ -1,6 +1,7 @@
 #ifndef BIS_INTERPRETER_HPP
 #define BIS_INTERPRETER_HPP
 
+#include "Callable.hpp"
 #include "Environment.hpp"
 #include "Expr.hpp"
 #include "RuntimeError.hpp"
@@ -9,35 +10,28 @@
 
 class Interpreter : public ExprVisitor<std::any>, public StmtVisitor
 {
-private:
-    std::unique_ptr<Environment> environment;
-
-    class ScopedEnvironment
-    {
-    public:
-        ScopedEnvironment(Interpreter& interpreter, std::unique_ptr<Environment> env);
-        ~ScopedEnvironment();
-
-    private:
-        Interpreter& interpreter;
-        std::unique_ptr<Environment> previous_env;
-    };
-
 public:
     void interpret(const std::vector<unique_stmt_ptr>& statements);
     Interpreter();
 
-private:
-    void checkNumberOperand(const Token& op, const std::any& operand) const;
-    void checkNumberOperands(const Token& op, const std::any& lhs, const std::any& rhs) const;
-    bool isTruthy(const std::any& object) const;
-    bool isEqual(const std::any& lhs, const std::any& rhs) const;
-
-    std::string stringify(std::any& object) const;
     std::any evaluate(const Expr& expr);
     void execute(const Stmt& stmt);
     void executeBlock(const std::vector<unique_stmt_ptr>& statements,
                       std::unique_ptr<Environment> new_env);
+
+    Environment& getGlobalEnvironment();
+
+private:
+    std::unique_ptr<Environment> environment;
+    std::unique_ptr<Environment> globals;
+
+    void checkNumberOperand(const Token& op, const std::any& operand) const;
+    void checkNumberOperands(const Token& op, const std::any& lhs, const std::any& rhs) const;
+
+    bool isTruthy(const std::any& object) const;
+    bool isEqual(const std::any& lhs, const std::any& rhs) const;
+
+    std::string stringify(std::any& object) const;
 
     std::any visit(const BinaryExpr& expr) override;
     std::any visit(const UnaryExpr& expr) override;
@@ -67,6 +61,17 @@ private:
     void visit(const VarStmt& stmt) override;
     void visit(const WhileStmt& stmt) override;
     void visit(const ForStmt& stmt) override;
+
+    class ScopedEnvironment
+    {
+    public:
+        ScopedEnvironment(Interpreter& interpreter, std::unique_ptr<Environment> env);
+        ~ScopedEnvironment();
+
+    private:
+        Interpreter& interpreter;
+        std::unique_ptr<Environment> previous_env;
+    };
 };
 
 #endif // BIS_INTERPRETER_HPP

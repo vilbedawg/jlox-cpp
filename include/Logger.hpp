@@ -25,6 +25,7 @@ namespace Error
     void addRuntimeError(const RuntimeError& error) noexcept;
     void addError(unsigned int line, std::string where, std::string message) noexcept;
     void addError(const Token& token, std::string message) noexcept;
+
     extern bool hadError;
     extern bool hadRuntimeError;
     extern std::vector<ErrorInfo> exceptionList;

@@ -1,10 +1,12 @@
 #include "../include/Interpreter.hpp"
+#include "../include/BisFunction.hpp"
 #include "../include/Logger.hpp"
 #include "../include/RuntimeException.hpp"
 
 Interpreter::Interpreter()
 {
     environment = std::make_unique<Environment>();
+    globals = std::make_unique<Environment>();
 }
 
 void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
@@ -229,7 +231,7 @@ void Interpreter::visit(const WhileStmt& stmt)
         }
         catch (const ContinueException&)
         {
-            // Continue.
+            // Do nothing
         }
         catch (const BreakException&)
         {
@@ -242,7 +244,6 @@ void Interpreter::visit(const ForStmt& stmt)
 {
     auto current = std::make_unique<Environment>(environment.get());
     ScopedEnvironment new_env{*this, std::move(current)};
-    // for (var i = 0; i < 10; i++) { if (i > 5) { continue; } print i; }
 
     if (stmt.initializer)
     {
@@ -378,7 +379,30 @@ std::any Interpreter::visit(const AssignExpr& expr)
 
 std::any Interpreter::visit(const CallExpr& expr)
 {
-    return std::any{};
+    auto callee = evaluate(*expr.callee);
+
+    std::vector<std::any> arguments;
+    for (const auto& arg : expr.args)
+    {
+        arguments.emplace_back(evaluate(*arg));
+    }
+
+    if (callee.type() != typeid(Callable))
+    {
+        throw RuntimeError(expr.paren,
+                           expr.paren.lexeme +
+                               " is not callable. Callable object must be a function or a class.");
+    }
+
+    auto function = std::any_cast<BisFunction>(callee);
+    if (arguments.size() != function.getArity())
+    {
+        throw RuntimeError(expr.paren, "Expected " + std::to_string(function.getArity()) +
+                                           " arguments but got " +
+                                           std::to_string(arguments.size()) + " .");
+    }
+
+    return function.call(*this, arguments);
 }
 
 std::any Interpreter::visit(const GetExpr& expr)
@@ -454,6 +478,12 @@ std::any Interpreter::visit(const DecrementExpr& expr)
     environment->assign(varExpr->identifier, decremented_variable);
 
     return expr.type == DecrementExpr::Type::POSTFIX ? variable : decremented_variable;
+}
+
+Environment& Interpreter::getGlobalEnvironment()
+{
+    assert(globals);
+    return *globals;
 }
 
 Interpreter::ScopedEnvironment::ScopedEnvironment(Interpreter& interpreter,
