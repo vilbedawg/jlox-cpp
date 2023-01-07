@@ -1,17 +1,5 @@
 #include "../include/Parser.hpp"
 
-/**
- *  Each productions body roughly translates to the following
- *
- *  Grammar notation -> Code representation
- *  ----------------------------------------
- *  Terminal            Code to match and consume a token
- *  Nonterminal         Call to that rule's function
- *  |                   if or switch statement
- *  * or +              while or for loop
- *  ?                   if statement
- */
-
 Parser::Parser(std::vector<Token> tokens) : tokens{std::move(tokens)}
 {
 }
@@ -29,13 +17,6 @@ std::vector<unique_stmt_ptr> Parser::parse()
 
 unique_stmt_ptr Parser::statement()
 {
-    // statement -> exprStmt
-    //             | forStmt
-    //             | ifStmt
-    //             | printStmt
-    //             | returnStmt
-    //             | whileStmt
-    //             | block;
     if (match({TokenType::FOR}))
         return forStatement();
     if (match({TokenType::IF}))
@@ -58,13 +39,13 @@ unique_stmt_ptr Parser::controlStatement()
     unique_stmt_ptr stmt;
     if (token.type == TokenType::BREAK)
     {
-        expect(TokenType::SEMICOLON, "Expect ';' after break.");
+        consume(TokenType::SEMICOLON, "Expect ';' after break.");
         stmt = std::make_unique<BreakStmt>(std::move(token));
     }
 
     else if (token.type == TokenType::CONTINUE)
     {
-        expect(TokenType::SEMICOLON, "Expect ';' after continue.");
+        consume(TokenType::SEMICOLON, "Expect ';' after continue.");
         stmt = std::make_unique<ContinueStmt>(std::move(token));
     }
 
@@ -95,19 +76,14 @@ unique_expr_ptr Parser::forExpression(TokenType type, std::string msg)
         expr = expression();
     }
 
-    expect(type, std::move(msg));
+    consume(type, std::move(msg));
 
     return expr;
 }
 
 unique_stmt_ptr Parser::forStatement()
 {
-    /**
-     * forStmt ->   "for" "(" ( varDecl | exprStmt | ";" )
-     *              expression? ";"
-     *              expression? ")" statement ;
-     */
-    expect(TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
+    consume(TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
     auto initializer = forInitializer();
     auto condition = forExpression(TokenType::SEMICOLON, "Expect ';' after loop condition.");
     auto increment = forExpression(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
@@ -119,19 +95,19 @@ unique_stmt_ptr Parser::forStatement()
 
 unique_stmt_ptr Parser::ifStatement()
 {
-    // ifStmt -> "if" "(" expression ")" statement ("elif" statement )? ( "else" statement )? ;
-    expect(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
+    consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
     auto if_condition = expression();
-    expect(TokenType::RIGHT_PAREN, "Expect ')' after 'if condition.");
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after 'if condition.");
     auto then_statement = statement();
 
     IfBranch main_branch{std::move(if_condition), std::move(then_statement)};
     std::vector<IfBranch> elif_branches;
+
     while (match({TokenType::ELIF}))
     {
-        expect(TokenType::LEFT_PAREN, "Expect '(' after 'elif'.");
+        consume(TokenType::LEFT_PAREN, "Expect '(' after 'elif'.");
         auto elif_condition = expression();
-        expect(TokenType::RIGHT_PAREN, "Expect ')' after 'elif'.");
+        consume(TokenType::RIGHT_PAREN, "Expect ')' after 'elif'.");
         auto elif_statement = statement();
         elif_branches.emplace_back(std::move(elif_condition), std::move(elif_statement));
     }
@@ -148,7 +124,6 @@ unique_stmt_ptr Parser::ifStatement()
 
 unique_stmt_ptr Parser::declaration()
 {
-    // declaration -> fnDecl | varDecl | statement ;
     try
     {
         if (match({TokenType::VAR}))
@@ -167,30 +142,27 @@ unique_stmt_ptr Parser::declaration()
 
 unique_stmt_ptr Parser::printStatement()
 {
-    // printStmt -> "print" expression ";" ;
     auto value = expression();
-    expect(TokenType::SEMICOLON, "Expect ';' after value.");
+    consume(TokenType::SEMICOLON, "Expect ';' after value.");
 
     return std::make_unique<PrintStmt>(std::move(value));
 }
 
 unique_stmt_ptr Parser::varDeclaration()
 {
-    // varDeclaration -> IDENTIFIER ("=" expression)? ";" ;
-    expect(TokenType::IDENTIFIER, "Expect variable name.");
+    consume(TokenType::IDENTIFIER, "Expect variable name.");
     auto identifier = previous();
     auto initializer = match({TokenType::EQUAL}) ? expression() : nullptr;
-    expect(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
+    consume(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
 
     return std::make_unique<VarStmt>(std::move(identifier), std::move(initializer));
 }
 
 unique_stmt_ptr Parser::whileStatement()
 {
-    // whileStmt -> "while" "(" expression ")" statement ;
-    expect(TokenType::LEFT_PAREN, "Expect a '(' after 'while'.");
+    consume(TokenType::LEFT_PAREN, "Expect a '(' after 'while'.");
     auto condition = expression();
-    expect(TokenType::RIGHT_PAREN, "Expect a ')' after 'while'.");
+    consume(TokenType::RIGHT_PAREN, "Expect a ')' after 'while'.");
     auto body = statement();
 
     return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
@@ -198,18 +170,17 @@ unique_stmt_ptr Parser::whileStatement()
 
 unique_stmt_ptr Parser::expressionStatement()
 {
-    // exprStmt -> expression ";" ;
     auto expr = expression();
-    expect(TokenType::SEMICOLON, "Expect ';' after value.");
+    consume(TokenType::SEMICOLON, "Expect ';' after value.");
 
     return std::make_unique<ExprStmt>(std::move(expr));
 }
 
 unique_stmt_ptr Parser::function(const std::string& kind)
 {
+    consume(TokenType::IDENTIFIER, "Expect " + kind + " name.");
     auto identifier = previous();
-    expect(TokenType::LEFT_PAREN, "Expect '(' after " + kind + " name.");
-
+    consume(TokenType::LEFT_PAREN, "Expect '(' after " + kind + " name.");
     std::vector<Token> params;
     if (!check(TokenType::RIGHT_PAREN))
     {
@@ -220,35 +191,34 @@ unique_stmt_ptr Parser::function(const std::string& kind)
                 error(peek(), "Can't exceed more than 254 parameters.");
             }
 
+            consume(TokenType::IDENTIFIER, "Expect parameter name.");
             params.emplace_back(previous());
-            expect(TokenType::IDENTIFIER, "Expect parameter name.");
         } while (match({TokenType::COMMA}));
     }
 
-    expect(TokenType::IDENTIFIER, "Expect ')' after parameters.");
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
+    consume(TokenType::LEFT_BRACE, "Expect '{' before " + kind + " body.");
 
-    expect(TokenType::LEFT_BRACE, "Expect '{' before " + kind + " body.");
     auto body = block();
+
     return std::make_unique<FnStmt>(std::move(identifier), std::move(params), std::move(body));
 }
 
 std::vector<unique_stmt_ptr> Parser::block()
 {
-    // block -> "{" declaration* "}" ;
     std::vector<unique_stmt_ptr> statements;
     while (!check(TokenType::RIGHT_BRACE) && !isAtEnd())
     {
         statements.emplace_back(declaration());
     }
 
-    expect(TokenType::RIGHT_BRACE, "Expect '}' after block.");
+    consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
 
     return statements;
 }
 
 unique_expr_ptr Parser::assignment()
 {
-    // assignment → IDENTIFIER "=" assignment | logic_or ;
     auto expr = orExpression();
 
     if (match({TokenType::EQUAL}))
@@ -269,7 +239,6 @@ unique_expr_ptr Parser::assignment()
 
 unique_expr_ptr Parser::orExpression()
 {
-    // logic_or -> logic_and ( "or" logic_and )* ;
     auto expr = andExpression();
 
     while (match({TokenType::OR}))
@@ -284,7 +253,6 @@ unique_expr_ptr Parser::orExpression()
 
 unique_expr_ptr Parser::andExpression()
 {
-    // logic_and -> equality ( "and" equality )* ;
     auto expr = equality();
 
     while (match({TokenType::AND}))
@@ -299,7 +267,6 @@ unique_expr_ptr Parser::andExpression()
 
 unique_expr_ptr Parser::expression()
 {
-    // expression -> assignment ;
     return assignment();
 }
 
@@ -320,33 +287,28 @@ unique_expr_ptr Parser::binary(Fn func, const std::initializer_list<TokenType>& 
 
 unique_expr_ptr Parser::equality()
 {
-    // equality -> comparison ( ( "!=" | "==" ) comparison )* ;
     return binary([this]() { return comparison(); },
                   {TokenType::EXCLAMATION_EQUAL, TokenType::EQUAL_EQUAL});
 }
 
 unique_expr_ptr Parser::comparison()
 {
-    // comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     return binary([this]() { return term(); }, {TokenType::GREATER, TokenType::GREATER_EQUAL,
                                                 TokenType::LESS, TokenType::LESS_EQUAL});
 }
 
 unique_expr_ptr Parser::term()
 {
-    // term -> factor ( (  "-" | "+" ) factor )* ;
     return binary([this]() { return factor(); }, {TokenType::MINUS, TokenType::PLUS});
 }
 
 unique_expr_ptr Parser::factor()
 {
-    // factor → unary ( ( "/" | "*" ) unary )* ;
     return binary([this]() { return unary(); }, {TokenType::SLASH, TokenType::STAR});
 }
 
 unique_expr_ptr Parser::unary()
 {
-    // unary -> ( "!" | "-" ) unary | prefix ;
     if (match({TokenType::EXCLAMATION, TokenType::MINUS}))
     {
         auto op = previous();
@@ -360,31 +322,25 @@ unique_expr_ptr Parser::unary()
 
 unique_expr_ptr Parser::prefix()
 {
-    // prefix -> ( "++" | "--" ) prefix | lvalue | postfix;
     if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
     {
         auto op = previous();
-        auto right = prefix();
-        if (dynamic_cast<IncrementExpr*>(right.get()) || dynamic_cast<DecrementExpr*>(right.get()))
+        consume(TokenType::IDENTIFIER,
+                "Operators '++' and '--' must be applied to and lvalue operand.");
+        auto lvalue = previous();
+
+        if (lvalue.type == TokenType::PLUS_PLUS || lvalue.type == TokenType::MINUS_MINUS)
         {
             throw error(peek(), "Operators '++' and '--' cannot be concatenated.");
         }
 
-        if (!dynamic_cast<VarExpr*>(right.get()))
-        {
-            throw error(op, "Operators '++' and '--' must be applied to and lvalue operand.");
-        }
-
-        std::unique_ptr<VarExpr> identifier{dynamic_cast<VarExpr*>(right.release())};
         if (op.type == TokenType::PLUS_PLUS)
         {
-            return std::make_unique<IncrementExpr>(std::move(identifier),
-                                                   IncrementExpr::Type::PREFIX);
+            return std::make_unique<IncrementExpr>(std::move(lvalue), IncrementExpr::Type::PREFIX);
         }
         else
         {
-            return std::make_unique<DecrementExpr>(std::move(identifier),
-                                                   DecrementExpr::Type::PREFIX);
+            return std::make_unique<DecrementExpr>(std::move(lvalue), DecrementExpr::Type::PREFIX);
         }
     }
 
@@ -393,33 +349,32 @@ unique_expr_ptr Parser::prefix()
 
 unique_expr_ptr Parser::postfix()
 {
-    // postfix -> call ( ( "++" | "--" ) lvalue );
     auto expr = call();
 
-    if (!match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
-    {
-        return expr;
-    }
-
-    const auto& op = previous();
-    if (!dynamic_cast<VarExpr*>(expr.get())) // If lvalue doesnt exist
-    {
-        throw error(op, "Operators '++' and '--' must be applied to and lvalue operand.");
-    }
-
-    std::unique_ptr<VarExpr> identifier{dynamic_cast<VarExpr*>(expr.release())};
-    if (op.type == TokenType::PLUS_PLUS)
-    {
-        expr = std::make_unique<IncrementExpr>(std::move(identifier), IncrementExpr::Type::POSTFIX);
-    }
-    else
-    {
-        expr = std::make_unique<DecrementExpr>(std::move(identifier), DecrementExpr::Type::POSTFIX);
-    }
+    auto lvalue = previous();
 
     if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
     {
-        throw error(peek(), "Operators '++' and '--' cannot be concatenated.");
+        const auto& op = previous();
+
+        if (lvalue.type != TokenType::IDENTIFIER)
+        {
+            throw error(lvalue, "Operators '++' and '--' must be applied to and lvalue operand.");
+        }
+
+        if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
+        {
+            throw error(lvalue, "Operators '++' and '--' cannot be concatenated.");
+        }
+
+        if (op.type == TokenType::PLUS_PLUS)
+        {
+            expr = std::make_unique<IncrementExpr>(std::move(lvalue), IncrementExpr::Type::POSTFIX);
+        }
+        else
+        {
+            expr = std::make_unique<DecrementExpr>(std::move(lvalue), DecrementExpr::Type::POSTFIX);
+        }
     }
 
     return expr;
@@ -427,7 +382,6 @@ unique_expr_ptr Parser::postfix()
 
 unique_expr_ptr Parser::call()
 {
-    // call -> primary ( "(" arguments? ")" )* ;
     auto expr = primary();
 
     while (true)
@@ -452,19 +406,18 @@ unique_expr_ptr Parser::finishCall(unique_expr_ptr callee)
     {
         do
         {
-            if (arguments.size() >= 255)
+            if (arguments.size() > 254)
             {
-                error(peek(), "Argument limit exceeded. Can't have more than 255 arguments.");
+                error(peek(), "Argument limit exceeded. Can't have more than 254 arguments.");
             }
 
             arguments.emplace_back(expression());
         } while (match({TokenType::COMMA}));
-
-        auto paren = previous();
-        expect(TokenType::RIGHT_PAREN, "Except ')' after arguments.");
-        return std::make_unique<CallExpr>(std::move(callee), std::move(paren),
-                                          std::move(arguments));
     }
+
+    consume(TokenType::RIGHT_PAREN, "Except ')' after arguments.");
+    auto paren = previous();
+    return std::make_unique<CallExpr>(std::move(callee), std::move(paren), std::move(arguments));
 }
 
 // unique_expr_ptr Parser::list()
@@ -475,10 +428,6 @@ unique_expr_ptr Parser::finishCall(unique_expr_ptr callee)
 unique_expr_ptr Parser::primary()
 {
     using enum TokenType;
-    /**
-     * primary  -> LIST | NUMBER | STRING | "true" | "false" | "nil"
-     *             IDENTIFIER |  "(" expression ")" ;
-     */
     // if (match({TokenType::LEFT_BRACKET}))
     // {
     //     return list();
@@ -516,7 +465,7 @@ unique_expr_ptr Parser::primary()
     if (match({LEFT_PAREN}))
     {
         auto expr = expression();
-        expect(RIGHT_PAREN, "Expect ')' after expression.");
+        consume(RIGHT_PAREN, "Expect ')' after expression.");
         return std::make_unique<GroupingExpr>(std::move(expr));
     }
 
@@ -535,7 +484,7 @@ bool Parser::match(const std::initializer_list<TokenType> token_args)
     return is_match;
 }
 
-void Parser::expect(TokenType type, std::string msg)
+void Parser::consume(TokenType type, std::string msg)
 {
     if (!check(type))
     {
