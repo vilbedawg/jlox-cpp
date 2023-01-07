@@ -1,4 +1,4 @@
-#include "../include/Expr.hpp"
+#include "../include/ExprNode.hpp"
 #include <cassert>
 #include <utility>
 
@@ -35,10 +35,10 @@ std::any UnaryExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-IncrementExpr::IncrementExpr(std::unique_ptr<VarExpr> variable, Type type)
+IncrementExpr::IncrementExpr(Token variable, Type type)
     : identifier{std::move(variable)}, type{type}
 {
-    assert(this->identifier != nullptr);
+    assert(this->identifier.type == TokenType::IDENTIFIER);
 }
 
 std::any IncrementExpr::accept(ExprVisitor<std::any>& visitor) const
@@ -46,10 +46,10 @@ std::any IncrementExpr::accept(ExprVisitor<std::any>& visitor) const
     return visitor.visit(*this);
 }
 
-DecrementExpr::DecrementExpr(std::unique_ptr<VarExpr> variable, Type type)
+DecrementExpr::DecrementExpr(Token variable, Type type)
     : identifier{std::move(variable)}, type{type}
 {
-    assert(this->identifier != nullptr);
+    assert(this->identifier.type == TokenType::IDENTIFIER);
 }
 
 std::any DecrementExpr::accept(ExprVisitor<std::any>& visitor) const
@@ -60,7 +60,7 @@ std::any DecrementExpr::accept(ExprVisitor<std::any>& visitor) const
 CallExpr::CallExpr(unique_expr_ptr callee, Token paren, std::vector<unique_expr_ptr> args)
     : callee{std::move(callee)}, paren{std::move(paren)}, args{std::move(args)}
 {
-    assert(paren.type == TokenType::RIGHT_PAREN);
+    assert(this->paren.type == TokenType::RIGHT_PAREN);
 }
 
 std::any CallExpr::accept(ExprVisitor<std::any>& visitor) const
