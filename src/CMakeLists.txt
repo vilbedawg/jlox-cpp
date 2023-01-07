@@ -9,11 +9,11 @@ target_include_directories(BIS
 
 target_sources(BIS
         PUBLIC
-        Expr.cpp
+        ExprNode.cpp
         Lexer.cpp
         Logger.cpp
         Parser.cpp
-        Stmt.cpp
+        StmtNode.cpp
         Token.cpp
         Interpreter.cpp
         Environment.cpp

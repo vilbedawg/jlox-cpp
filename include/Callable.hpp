@@ -2,13 +2,10 @@
 #define BIS_CALLABLE_HPP
 
 #include <any>
-#include <functional>
 #include <string>
 #include <vector>
 
 class Interpreter;
-
-using FuncType = std::function<std::any(Interpreter&, const std::vector<std::any>&)>;
 
 class Callable
 {

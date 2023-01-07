@@ -19,4 +19,15 @@ public:
         : RuntimeError(token, "Cannot continue outside of a loop."){};
 };
 
+class ReturnException : public std::runtime_error
+{
+private:
+    std::any value;
+
+public:
+    explicit ReturnException(std::any value) : std::runtime_error{""}, value{std::move(value)} {};
+
+    const std::any& getReturnValue() const { return value; }
+};
+
 #endif // RUNTIME_EXCEPTION_HPP

@@ -11,10 +11,10 @@ class BisFunction : public Callable
 {
 private:
     int arity = 0;
-    FnStmt* funcDeclaration;
+    const FnStmt* declaration;
 
 public:
-    explicit BisFunction(FnStmt* declaration);
+    explicit BisFunction(const FnStmt* declaration);
 
     int getArity() const override;
     std::any call(Interpreter& interpreter, const std::vector<std::any>& args) const override;

@@ -1,12 +1,14 @@
 #include "../include/Interpreter.hpp"
 #include "../include/BisFunction.hpp"
+#include "../include/ClockCallable.hpp"
 #include "../include/Logger.hpp"
 #include "../include/RuntimeException.hpp"
+#include <type_traits>
 
-Interpreter::Interpreter()
+Interpreter::Interpreter() : global_environment{globals.get()}
 {
-    environment = std::make_unique<Environment>();
-    globals = std::make_unique<Environment>();
+    globals->define("clock", ClockCallable{});
+    environment = std::move(globals);
 }
 
 void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
@@ -22,6 +24,10 @@ void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
     catch (const RuntimeError& error)
     {
         Error::addRuntimeError(error);
+    }
+    catch (const ReturnException&)
+    {
+        // Do nothing.
     }
 
     Error::report();
@@ -67,9 +73,9 @@ void Interpreter::execute(const Stmt& stmt)
 }
 
 void Interpreter::executeBlock(const std::vector<unique_stmt_ptr>& statements,
-                               std::unique_ptr<Environment> new_env)
+                               std::unique_ptr<Environment> current_env)
 {
-    ScopedEnvironment scoped_env(*this, std::move(new_env));
+    ScopedEnvironment scoped_env(*this, std::move(current_env));
     for (const auto& statement : statements)
     {
         assert(statement != nullptr);
@@ -171,6 +177,7 @@ void Interpreter::visit(const ClassStmt& stmt)
 
 void Interpreter::visit(const FnStmt& stmt)
 {
+    environment->define(stmt.identifier.lexeme, BisFunction(&stmt));
 }
 
 void Interpreter::visit(const IfStmt& stmt)
@@ -198,6 +205,13 @@ void Interpreter::visit(const IfStmt& stmt)
 
 void Interpreter::visit(const ReturnStmt& stmt)
 {
+    std::any value;
+    if (stmt.expression)
+    {
+        value = evaluate(*stmt.expression);
+    }
+
+    throw ReturnException(value);
 }
 
 void Interpreter::visit(const BreakStmt& stmt)
@@ -382,27 +396,37 @@ std::any Interpreter::visit(const CallExpr& expr)
     auto callee = evaluate(*expr.callee);
 
     std::vector<std::any> arguments;
+    arguments.reserve(expr.args.size());
     for (const auto& arg : expr.args)
     {
         arguments.emplace_back(evaluate(*arg));
     }
 
-    if (callee.type() != typeid(Callable))
+    // Todo: This could be made in a more scalable way.
+    std::unique_ptr<Callable> function;
+    if (callee.type() == typeid(BisFunction))
+    {
+        function = std::make_unique<BisFunction>(std::any_cast<BisFunction>(callee));
+    }
+    else if (callee.type() == typeid(ClockCallable))
+    {
+        function = std::make_unique<ClockCallable>(std::any_cast<ClockCallable>(callee));
+    }
+    else
     {
         throw RuntimeError(expr.paren,
                            expr.paren.lexeme +
                                " is not callable. Callable object must be a function or a class.");
     }
 
-    auto function = std::any_cast<BisFunction>(callee);
-    if (arguments.size() != function.getArity())
+    if (arguments.size() != function->getArity())
     {
-        throw RuntimeError(expr.paren, "Expected " + std::to_string(function.getArity()) +
+        throw RuntimeError(expr.paren, "Expected " + std::to_string(function->getArity()) +
                                            " arguments but got " +
                                            std::to_string(arguments.size()) + " .");
     }
 
-    return function.call(*this, arguments);
+    return function->call(*this, arguments);
 }
 
 std::any Interpreter::visit(const GetExpr& expr)
@@ -450,40 +474,40 @@ std::any Interpreter::visit(const ListExpr& expr)
 
 std::any Interpreter::visit(const IncrementExpr& expr)
 {
-    const auto variable = evaluate(*expr.identifier);
-    const auto* varExpr = expr.identifier.get();
+    const auto variable = environment->lookup(expr.identifier);
 
     if (variable.type() != typeid(double))
     {
-        throw RuntimeError(varExpr->identifier, "Cannot increment a non integer type '" +
-                                                    varExpr->identifier.lexeme + "'.");
+        throw RuntimeError(expr.identifier,
+                           "Cannot increment a non integer type '" + expr.identifier.lexeme + "'.");
     }
+
     const auto incremented_variable = std::any_cast<double>(variable) + 1;
-    environment->assign(varExpr->identifier, incremented_variable);
+    environment->assign(expr.identifier, incremented_variable);
 
     return expr.type == IncrementExpr::Type::POSTFIX ? variable : incremented_variable;
 }
 
 std::any Interpreter::visit(const DecrementExpr& expr)
 {
-    const auto variable = evaluate(*expr.identifier);
-    const auto* varExpr = expr.identifier.get();
+    const auto variable = environment->lookup(expr.identifier);
 
     if (variable.type() != typeid(double))
     {
-        throw RuntimeError(varExpr->identifier, "Cannot decrement a non integer type '" +
-                                                    varExpr->identifier.lexeme + "'.");
+        throw RuntimeError(expr.identifier,
+                           "Cannot decrement a non integer type '" + expr.identifier.lexeme + "'.");
     }
+
     const auto decremented_variable = std::any_cast<double>(variable) - 1;
-    environment->assign(varExpr->identifier, decremented_variable);
+    environment->assign(expr.identifier, decremented_variable);
 
     return expr.type == DecrementExpr::Type::POSTFIX ? variable : decremented_variable;
 }
 
 Environment& Interpreter::getGlobalEnvironment()
 {
-    assert(globals);
-    return *globals;
+    assert(global_environment);
+    return *global_environment;
 }
 
 Interpreter::ScopedEnvironment::ScopedEnvironment(Interpreter& interpreter,

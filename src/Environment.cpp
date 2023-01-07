@@ -16,7 +16,6 @@ void Environment::define(const std::string& identifier, const std::any& value)
 
 const std::any& Environment::lookup(const Token& identifier)
 {
-
     if (values.contains(identifier.lexeme))
     {
         return values.at(identifier.lexeme);

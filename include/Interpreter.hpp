@@ -3,34 +3,31 @@
 
 #include "Callable.hpp"
 #include "Environment.hpp"
-#include "Expr.hpp"
+#include "ExprNode.hpp"
 #include "RuntimeError.hpp"
-#include "Stmt.hpp"
+#include "StmtNode.hpp"
 #include "Visitor.hpp"
 
 class Interpreter : public ExprVisitor<std::any>, public StmtVisitor
 {
+private:
+    std::unique_ptr<Environment> globals = std::make_unique<Environment>();
+    Environment* global_environment;
+    std::unique_ptr<Environment> environment;
+
 public:
-    void interpret(const std::vector<unique_stmt_ptr>& statements);
     Interpreter();
 
+    Environment& getGlobalEnvironment();
+    void interpret(const std::vector<unique_stmt_ptr>& statements);
     std::any evaluate(const Expr& expr);
     void execute(const Stmt& stmt);
     void executeBlock(const std::vector<unique_stmt_ptr>& statements,
                       std::unique_ptr<Environment> new_env);
-
-    Environment& getGlobalEnvironment();
-
-private:
-    std::unique_ptr<Environment> environment;
-    std::unique_ptr<Environment> globals;
-
     void checkNumberOperand(const Token& op, const std::any& operand) const;
     void checkNumberOperands(const Token& op, const std::any& lhs, const std::any& rhs) const;
-
     bool isTruthy(const std::any& object) const;
     bool isEqual(const std::any& lhs, const std::any& rhs) const;
-
     std::string stringify(std::any& object) const;
 
     std::any visit(const BinaryExpr& expr) override;

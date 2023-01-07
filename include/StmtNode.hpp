@@ -75,7 +75,7 @@ struct ReturnStmt : Stmt
     Token keyword;
     unique_expr_ptr expression; // OPTIONAL
 
-    explicit ReturnStmt(Token keyword, unique_expr_ptr expr);
+    ReturnStmt(Token keyword, unique_expr_ptr expr);
     void accept(StmtVisitor& visitor) const override;
 };
 

@@ -121,13 +121,13 @@ std::any AstPrinter::visit(const ListExpr& expr)
 
 std::any AstPrinter::visit(const IncrementExpr& expr)
 {
-    parenthesize("++", {std::move(expr.identifier.get())});
+    // parenthesize("++", {std::move(expr.identifier.get())});
     return {};
 }
 
 std::any AstPrinter::visit(const DecrementExpr& expr)
 {
-    parenthesize("--", {std::move(expr.identifier.get())});
+    // parenthesize("--", {std::move(expr.identifier)});
     return {};
 }
 

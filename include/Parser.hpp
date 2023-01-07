@@ -48,6 +48,7 @@ public:
     unique_expr_ptr primary();
     unique_expr_ptr list();
     unique_stmt_ptr printStatement();
+    unique_stmt_ptr returnStatement();
     unique_stmt_ptr forInitializer();
     unique_expr_ptr forExpression(TokenType type, std::string msg);
     unique_stmt_ptr controlStatement();

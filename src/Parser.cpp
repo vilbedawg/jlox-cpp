@@ -23,6 +23,8 @@ unique_stmt_ptr Parser::statement()
         return ifStatement();
     if (match({TokenType::PRINT}))
         return printStatement();
+    if (match({TokenType::RETURN}))
+        return returnStatement();
     if (match({TokenType::WHILE}))
         return whileStatement();
     if (match({TokenType::LEFT_BRACE}))
@@ -146,6 +148,20 @@ unique_stmt_ptr Parser::printStatement()
     consume(TokenType::SEMICOLON, "Expect ';' after value.");
 
     return std::make_unique<PrintStmt>(std::move(value));
+}
+
+unique_stmt_ptr Parser::returnStatement()
+{
+    auto keyword = previous();
+    unique_expr_ptr value;
+    if (!check(TokenType::SEMICOLON))
+    {
+        value = expression();
+    }
+
+    consume(TokenType::SEMICOLON, "Expect ';' after return value.");
+
+    return std::make_unique<ReturnStmt>(std::move(keyword), std::move(value));
 }
 
 unique_stmt_ptr Parser::varDeclaration()
