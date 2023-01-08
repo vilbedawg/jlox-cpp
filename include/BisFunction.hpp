@@ -10,14 +10,14 @@ struct FnStmt;
 class BisFunction : public Callable
 {
 private:
-    int arity = 0;
+    size_t arity = 0u;
     const FnStmt* declaration;
     std::shared_ptr<Environment> closure;
 
 public:
     BisFunction(const FnStmt* declaration, std::shared_ptr<Environment> closure);
 
-    int getArity() const override;
+    size_t getArity() const override;
     std::any call(Interpreter& interpreter, const std::vector<std::any>& args) const override;
     std::string toString() const override;
 };

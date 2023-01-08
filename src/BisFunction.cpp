@@ -7,9 +7,9 @@ BisFunction::BisFunction(const FnStmt* declaration, std::shared_ptr<Environment>
 {
 }
 
-int BisFunction::getArity() const
+size_t BisFunction::getArity() const
 {
-    return static_cast<int>(declaration->params.size());
+    return declaration->params.size();
 }
 
 std::any BisFunction::call(Interpreter& interpreter, const std::vector<std::any>& args) const

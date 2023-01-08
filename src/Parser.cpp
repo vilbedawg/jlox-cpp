@@ -144,10 +144,18 @@ unique_stmt_ptr Parser::declaration()
 
 unique_stmt_ptr Parser::printStatement()
 {
-    auto value = expression();
-    consume(TokenType::SEMICOLON, "Expect ';' after value.");
 
-    return std::make_unique<PrintStmt>(std::move(value));
+    auto identifier = previous();
+
+    if (!match({TokenType::LEFT_PAREN}))
+    {
+        error(peek(), "Expect '(' after 'print'.");
+    }
+    
+    auto expr = finishCall(std::make_unique<VarExpr>(std::move(identifier)));
+    consume(TokenType::SEMICOLON, "Expect ';' after print statement.");
+
+    return std::make_unique<PrintStmt>(std::move(expr));
 }
 
 unique_stmt_ptr Parser::returnStatement()
@@ -343,6 +351,7 @@ unique_expr_ptr Parser::prefix()
         auto op = previous();
         consume(TokenType::IDENTIFIER,
                 "Operators '++' and '--' must be applied to and lvalue operand.");
+
         auto lvalue = previous();
 
         if (lvalue.type == TokenType::PLUS_PLUS || lvalue.type == TokenType::MINUS_MINUS)

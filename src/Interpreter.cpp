@@ -1,13 +1,14 @@
 #include "../include/Interpreter.hpp"
 #include "../include/BisFunction.hpp"
-#include "../include/ClockCallable.hpp"
+#include "../include/BuiltIn.hpp"
 #include "../include/Logger.hpp"
 #include "../include/RuntimeException.hpp"
 #include <type_traits>
 
 Interpreter::Interpreter() : global_environment{globals.get()}
 {
-    globals->define("clock", ClockCallable{});
+    globals->define("clock", bis::ClockCallable{});
+    globals->define("print", bis::PrintCallable{});
     environment = std::move(globals);
 }
 
@@ -31,35 +32,6 @@ void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
     }
 
     Error::report();
-}
-
-std::string Interpreter::stringify(std::any& object) const
-{
-    if (!object.has_value())
-    {
-        return "nil";
-    }
-
-    if (object.type() == typeid(bool))
-    {
-        return std::any_cast<bool>(object) ? "true" : "false";
-    }
-
-    if (object.type() == typeid(double))
-    {
-        auto num_as_string = std::to_string(std::any_cast<double>(object));
-        // remove trailing zeroes.
-        num_as_string.erase(num_as_string.find_last_not_of('0') + 1, std::string::npos);
-        num_as_string.erase(num_as_string.find_last_not_of('.') + 1, std::string::npos);
-        return num_as_string;
-    }
-
-    if (object.type() == typeid(std::string))
-    {
-        return std::any_cast<std::string>(object);
-    }
-
-    return {};
 }
 
 std::any Interpreter::evaluate(const Expr& expr)
@@ -156,14 +128,7 @@ void Interpreter::visit(const ExprStmt& stmt)
 
 void Interpreter::visit(const PrintStmt& stmt)
 {
-    if (!stmt.expression.get())
-    {
-        std::cout << '\n';
-        return;
-    }
-
-    auto value = evaluate(*stmt.expression);
-    std::cout << stringify(value) << '\n';
+    evaluate(*stmt.expression);
 }
 
 void Interpreter::visit(const BlockStmt& stmt)
@@ -346,7 +311,23 @@ std::any Interpreter::visit(const BinaryExpr& expr)
         {
             return std::any_cast<double>(left) + std::any_cast<double>(right);
         }
-        throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
+        else if (left.type() == typeid(double) && right.type() == typeid(std::string))
+        {
+
+            std::string num_as_string = std::to_string(std::any_cast<double>(left));
+            num_as_string.erase(num_as_string.find_last_not_of('0') + 1, std::string::npos);
+            num_as_string.erase(num_as_string.find_last_not_of('.') + 1, std::string::npos);
+            return num_as_string + std::any_cast<std::string>(right);
+        }
+        else if (left.type() == typeid(std::string) && right.type() == typeid(double))
+        {
+            std::string num_as_string = std::to_string(std::any_cast<double>(right));
+            num_as_string.erase(num_as_string.find_last_not_of('0') + 1, std::string::npos);
+            num_as_string.erase(num_as_string.find_last_not_of('.') + 1, std::string::npos);
+            return std::any_cast<std::string>(left) + num_as_string;
+        }
+
+        throw RuntimeError(expr.op, "Operands must be of type string or number.");
 
     default:
         return {};
@@ -406,9 +387,13 @@ std::any Interpreter::visit(const CallExpr& expr)
     {
         function = std::make_unique<BisFunction>(std::any_cast<BisFunction>(callee));
     }
-    else if (callee.type() == typeid(ClockCallable))
+    else if (callee.type() == typeid(bis::ClockCallable))
     {
-        function = std::make_unique<ClockCallable>(std::any_cast<ClockCallable>(callee));
+        function = std::make_unique<bis::ClockCallable>();
+    }
+    else if (callee.type() == typeid(bis::PrintCallable))
+    {
+        function = std::make_unique<bis::PrintCallable>(arguments.size());
     }
     else
     {

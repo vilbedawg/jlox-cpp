@@ -15,7 +15,7 @@ private:
     std::unordered_map<std::string, std::any> values;
 
 public:
-    Environment(std::shared_ptr<Environment> parent_env);
+    explicit Environment(std::shared_ptr<Environment> parent_env);
     Environment();
 
     void define(const std::string& identifier, const std::any& value);

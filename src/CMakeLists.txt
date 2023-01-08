@@ -18,7 +18,7 @@ target_sources(BIS
         Interpreter.cpp
         Environment.cpp
         BisFunction.cpp
-        ClockCallable.cpp
+        BuiltIn.cpp
         )
 
 add_executable(main main.cpp)

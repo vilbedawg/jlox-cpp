@@ -74,6 +74,7 @@ void runPrompt()
         {
             std::exit(70);
         }
+        std::cout << "\n";
     }
 }
 

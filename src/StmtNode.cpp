@@ -67,7 +67,6 @@ void IfStmt::accept(StmtVisitor& visitor) const
 
 PrintStmt::PrintStmt(unique_expr_ptr expr) : expression{std::move(expr)}
 {
-    assert(this->expression != nullptr); // TODO: Make optional!
 }
 
 void PrintStmt::accept(StmtVisitor& visitor) const
