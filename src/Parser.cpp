@@ -149,9 +149,9 @@ unique_stmt_ptr Parser::printStatement()
 
     if (!match({TokenType::LEFT_PAREN}))
     {
-        error(peek(), "Expect '(' after 'print'.");
+        throw error(identifier, "Expect '(' after 'print'.");
     }
-    
+
     auto expr = finishCall(std::make_unique<VarExpr>(std::move(identifier)));
     consume(TokenType::SEMICOLON, "Expect ';' after print statement.");
 
@@ -251,7 +251,6 @@ unique_expr_ptr Parser::assignment()
         {
             auto value = assignment();
             auto identifier{dynamic_cast<VarExpr*>(expr.release())->identifier};
-
             return std::make_unique<AssignExpr>(std::move(identifier), std::move(value));
         }
 
