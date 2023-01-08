@@ -73,9 +73,9 @@ void Interpreter::execute(const Stmt& stmt)
 }
 
 void Interpreter::executeBlock(const std::vector<unique_stmt_ptr>& statements,
-                               std::unique_ptr<Environment> current_env)
+                               std::shared_ptr<Environment> enclosing_env)
 {
-    ScopedEnvironment scoped_env(*this, std::move(current_env));
+    EnvironmentGuard environment_guard{*this, std::move(enclosing_env)};
     for (const auto& statement : statements)
     {
         assert(statement != nullptr);
@@ -168,7 +168,7 @@ void Interpreter::visit(const PrintStmt& stmt)
 
 void Interpreter::visit(const BlockStmt& stmt)
 {
-    executeBlock(stmt.statements, std::make_unique<Environment>(environment.get()));
+    executeBlock(stmt.statements, environment);
 }
 
 void Interpreter::visit(const ClassStmt& stmt)
@@ -177,7 +177,7 @@ void Interpreter::visit(const ClassStmt& stmt)
 
 void Interpreter::visit(const FnStmt& stmt)
 {
-    environment->define(stmt.identifier.lexeme, BisFunction(&stmt));
+    environment->define(stmt.identifier.lexeme, BisFunction(&stmt, environment));
 }
 
 void Interpreter::visit(const IfStmt& stmt)
@@ -256,8 +256,7 @@ void Interpreter::visit(const WhileStmt& stmt)
 
 void Interpreter::visit(const ForStmt& stmt)
 {
-    auto current = std::make_unique<Environment>(environment.get());
-    ScopedEnvironment new_env{*this, std::move(current)};
+    EnvironmentGuard environment_guard{*this, environment};
 
     if (stmt.initializer)
     {
@@ -402,7 +401,6 @@ std::any Interpreter::visit(const CallExpr& expr)
         arguments.emplace_back(evaluate(*arg));
     }
 
-    // Todo: This could be made in a more scalable way.
     std::unique_ptr<Callable> function;
     if (callee.type() == typeid(BisFunction))
     {
@@ -510,15 +508,14 @@ Environment& Interpreter::getGlobalEnvironment()
     return *global_environment;
 }
 
-Interpreter::ScopedEnvironment::ScopedEnvironment(Interpreter& interpreter,
-                                                  std::unique_ptr<Environment> env)
-    : interpreter{interpreter}
+Interpreter::EnvironmentGuard::EnvironmentGuard(Interpreter& interpreter,
+                                                std::shared_ptr<Environment> enclosing_env)
+    : interpreter{interpreter}, previous_env{interpreter.environment}
 {
-    previous_env = std::move(interpreter.environment);
-    interpreter.environment = std::move(env);
+    interpreter.environment = std::make_shared<Environment>(std::move(enclosing_env));
 }
 
-Interpreter::ScopedEnvironment::~ScopedEnvironment()
+Interpreter::EnvironmentGuard::~EnvironmentGuard()
 {
     interpreter.environment = std::move(previous_env);
 }

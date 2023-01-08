@@ -12,8 +12,8 @@ class Interpreter : public ExprVisitor<std::any>, public StmtVisitor
 {
 private:
     std::unique_ptr<Environment> globals = std::make_unique<Environment>();
-    Environment* global_environment;
-    std::unique_ptr<Environment> environment;
+    Environment* const global_environment;
+    std::shared_ptr<Environment> environment;
 
 public:
     Interpreter();
@@ -23,7 +23,7 @@ public:
     std::any evaluate(const Expr& expr);
     void execute(const Stmt& stmt);
     void executeBlock(const std::vector<unique_stmt_ptr>& statements,
-                      std::unique_ptr<Environment> new_env);
+                      std::shared_ptr<Environment> enclosing_env);
     void checkNumberOperand(const Token& op, const std::any& operand) const;
     void checkNumberOperands(const Token& op, const std::any& lhs, const std::any& rhs) const;
     bool isTruthy(const std::any& object) const;
@@ -59,15 +59,15 @@ public:
     void visit(const WhileStmt& stmt) override;
     void visit(const ForStmt& stmt) override;
 
-    class ScopedEnvironment
+    class EnvironmentGuard
     {
     public:
-        ScopedEnvironment(Interpreter& interpreter, std::unique_ptr<Environment> env);
-        ~ScopedEnvironment();
+        EnvironmentGuard(Interpreter& interpreter, std::shared_ptr<Environment> env);
+        ~EnvironmentGuard();
 
     private:
         Interpreter& interpreter;
-        std::unique_ptr<Environment> previous_env;
+        std::shared_ptr<Environment> previous_env;
     };
 };
 

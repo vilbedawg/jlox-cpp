@@ -11,11 +11,11 @@
 class Environment
 {
 private:
-    Environment* parent_env;
+    std::shared_ptr<Environment> parent_env;
     std::unordered_map<std::string, std::any> values;
 
 public:
-    explicit Environment(Environment* parent_env);
+    Environment(std::shared_ptr<Environment> parent_env);
     Environment();
 
     void define(const std::string& identifier, const std::any& value);

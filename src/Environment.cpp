@@ -1,6 +1,7 @@
 #include "../include/Environment.hpp"
 
-Environment::Environment(Environment* parent_env) : parent_env{parent_env}
+
+Environment::Environment(std::shared_ptr<Environment> parent_env) : parent_env{parent_env}
 {
     assert(parent_env != nullptr);
 }
