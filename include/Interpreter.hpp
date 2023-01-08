@@ -28,7 +28,6 @@ public:
     void checkNumberOperands(const Token& op, const std::any& lhs, const std::any& rhs) const;
     bool isTruthy(const std::any& object) const;
     bool isEqual(const std::any& lhs, const std::any& rhs) const;
-    std::string stringify(std::any& object) const;
 
     std::any visit(const BinaryExpr& expr) override;
     std::any visit(const UnaryExpr& expr) override;
