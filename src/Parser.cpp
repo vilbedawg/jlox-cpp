@@ -243,19 +243,35 @@ std::vector<unique_stmt_ptr> Parser::block()
 
 unique_expr_ptr Parser::assignment()
 {
-    auto expr = orExpression();
+    auto expr = lambda();
 
     if (match({TokenType::EQUAL}))
     {
+        auto value = assignment();
+
         if (dynamic_cast<VarExpr*>(expr.get()))
         {
-            auto value = assignment();
-            auto identifier{dynamic_cast<VarExpr*>(expr.release())->identifier};
-            return std::make_unique<AssignExpr>(std::move(identifier), std::move(value));
+            return std::make_unique<AssignExpr>(
+                std::move(dynamic_cast<VarExpr*>(expr.release())->identifier), std::move(value));
         }
 
-        Error::addError(previous(), "Invalid assignment target.");
+        if (auto subscript_ptr = dynamic_cast<SubscriptExpr*>(expr.release()))
+        {
+            return std::make_unique<SubscriptExpr>(std::move(subscript_ptr->identifier),
+                                                   std::move(subscript_ptr->index),
+                                                   std::move(value));
+        }
+
+        throw error(previous(), "Invalid assignment target.");
     }
+
+    return expr;
+}
+
+unique_expr_ptr Parser::lambda()
+{
+    // Todo;
+    auto expr = orExpression();
 
     return expr;
 }
@@ -375,48 +391,29 @@ unique_expr_ptr Parser::postfix()
 {
     auto expr = call();
 
-    auto lvalue = previous();
-
     if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
     {
         const auto& op = previous();
 
-        if (lvalue.type != TokenType::IDENTIFIER)
+        if (!dynamic_cast<VarExpr*>(expr.get()))
         {
-            throw error(lvalue, "Operators '++' and '--' must be applied to and lvalue operand.");
+            throw error(op, "Operators '++' and '--' must be applied to and lvalue operand.");
         }
 
         if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
         {
-            throw error(lvalue, "Operators '++' and '--' cannot be concatenated.");
+            throw error(op, "Operators '++' and '--' cannot be concatenated.");
         }
 
         if (op.type == TokenType::PLUS_PLUS)
         {
-            expr = std::make_unique<IncrementExpr>(std::move(lvalue), IncrementExpr::Type::POSTFIX);
+            expr = std::make_unique<IncrementExpr>(
+                dynamic_cast<VarExpr*>(expr.release())->identifier, IncrementExpr::Type::POSTFIX);
         }
         else
         {
-            expr = std::make_unique<DecrementExpr>(std::move(lvalue), DecrementExpr::Type::POSTFIX);
-        }
-    }
-
-    return expr;
-}
-
-unique_expr_ptr Parser::call()
-{
-    auto expr = primary();
-
-    while (true)
-    {
-        if (match({TokenType::LEFT_PAREN}))
-        {
-            expr = finishCall(std::move(expr));
-        }
-        else
-        {
-            break;
+            expr = std::make_unique<DecrementExpr>(
+                dynamic_cast<VarExpr*>(expr.release())->identifier, DecrementExpr::Type::POSTFIX);
         }
     }
 
@@ -444,18 +441,84 @@ unique_expr_ptr Parser::finishCall(unique_expr_ptr callee)
     return std::make_unique<CallExpr>(std::move(callee), std::move(paren), std::move(arguments));
 }
 
-// unique_expr_ptr Parser::list()
-//{
-//     return nullptr;
-// }
+unique_expr_ptr Parser::call()
+{
+    auto expr = subscript();
+
+    while (true)
+    {
+        if (match({TokenType::LEFT_PAREN}))
+        {
+            expr = finishCall(std::move(expr));
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return expr;
+}
+
+unique_expr_ptr Parser::finishSubscript(unique_expr_ptr identifier)
+{
+    auto index = orExpression();
+    consume(TokenType::RIGHT_BRACKET, "Expect ']' after arguments.");
+    auto var = dynamic_cast<VarExpr*>(identifier.release())->identifier;
+
+    return std::make_unique<SubscriptExpr>(std::move(var), std::move(index), nullptr);
+}
+
+unique_expr_ptr Parser::subscript()
+{
+    auto expr = primary();
+
+    while (true)
+    {
+        if (match({TokenType::LEFT_BRACKET}))
+        {
+            expr = finishSubscript(std::move(expr));
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return expr;
+}
+
+std::vector<unique_expr_ptr> Parser::list()
+{
+    std::vector<unique_expr_ptr> items;
+    if (check(TokenType::RIGHT_BRACKET))
+    {
+        return items;
+    }
+
+    do
+    {
+        if (check(TokenType::RIGHT_BRACKET))
+        {
+            break;
+        }
+
+        items.emplace_back(orExpression());
+
+        if (items.size() > 100)
+        {
+            error(peek(), "Cannot have more than 100 items in a list.");
+        }
+
+    } while (match({TokenType::COMMA}));
+
+    return items;
+}
 
 unique_expr_ptr Parser::primary()
 {
     using enum TokenType;
-    // if (match({TokenType::LEFT_BRACKET}))
-    // {
-    //     return list();
-    // }
+
     if (match({NUMBER}))
     {
         return std::make_unique<LiteralExpr>(std::strtod(previous().lexeme.c_str(), nullptr));
@@ -490,7 +553,17 @@ unique_expr_ptr Parser::primary()
     {
         auto expr = expression();
         consume(RIGHT_PAREN, "Expect ')' after expression.");
+
         return std::make_unique<GroupingExpr>(std::move(expr));
+    }
+
+    if (match({LEFT_BRACKET}))
+    {
+        auto opening_bracket = previous();
+        auto expr = list();
+        consume(TokenType::RIGHT_BRACKET, "Expect ']' at the end of a list.");
+
+        return std::make_unique<ListExpr>(std::move(opening_bracket), std::move(expr));
     }
 
     throw error(peek(), "Expect expression.");

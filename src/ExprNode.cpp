@@ -158,3 +158,14 @@ std::any ListExpr::accept(ExprVisitor<std::any>& visitor) const
 {
     return visitor.visit(*this);
 }
+
+SubscriptExpr::SubscriptExpr(Token identifier, unique_expr_ptr index, unique_expr_ptr value)
+    : identifier{std::move(identifier)}, index{std::move(index)}, value{std::move(value)}
+{
+    assert(this->identifier.type == TokenType::IDENTIFIER);
+}
+
+std::any SubscriptExpr::accept(ExprVisitor<std::any>& visitor) const
+{
+    return visitor.visit(*this);
+}

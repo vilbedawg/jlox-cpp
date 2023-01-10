@@ -4,6 +4,7 @@
 #include "Callable.hpp"
 #include "Environment.hpp"
 #include "ExprNode.hpp"
+#include "ListType.hpp"
 #include "RuntimeError.hpp"
 #include "StmtNode.hpp"
 #include "Visitor.hpp"
@@ -42,6 +43,7 @@ public:
     std::any visit(const ThisExpr& expr) override;
     std::any visit(const VarExpr& expr) override;
     std::any visit(const ListExpr& expr) override;
+    std::any visit(const SubscriptExpr& expr) override;
     std::any visit(const IncrementExpr& expr) override;
     std::any visit(const DecrementExpr& expr) override;
 

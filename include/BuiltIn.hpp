@@ -1,6 +1,7 @@
 #ifndef BUILT_IN_HPP
 #define BUILT_IN_HPP
 
+#include "BisFunction.hpp"
 #include "Callable.hpp"
 #include <chrono>
 #include <iostream>
@@ -31,6 +32,8 @@ namespace bis
         std::any call(Interpreter& interpreter, const std::vector<std::any>& args) const override;
         std::string toString() const override;
     };
+
+    std::string stringify(const std::any& item);
 }
 
 #endif // BUILT_IN_HPP

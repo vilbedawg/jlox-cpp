@@ -153,4 +153,13 @@ struct ListExpr : Expr
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
 
+struct SubscriptExpr : Expr
+{
+    Token identifier;
+    unique_expr_ptr index;
+    unique_expr_ptr value;
+
+    SubscriptExpr(Token identifier, unique_expr_ptr index, unique_expr_ptr value);
+    std::any accept(ExprVisitor<std::any>& visitor) const override;
+};
 #endif // BIS_EXPR_HPP

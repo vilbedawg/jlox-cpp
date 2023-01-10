@@ -15,6 +15,7 @@ struct ThisExpr;
 struct UnaryExpr;
 struct VarExpr;
 struct ListExpr;
+struct SubscriptExpr;
 struct IncrementExpr;
 struct DecrementExpr;
 
@@ -34,6 +35,7 @@ struct ExprVisitor
     virtual T visit(const UnaryExpr& expr) = 0;
     virtual T visit(const VarExpr& expr) = 0;
     virtual T visit(const ListExpr& expr) = 0;
+    virtual T visit(const SubscriptExpr& expr) = 0;
     virtual T visit(const IncrementExpr& expr) = 0;
     virtual T visit(const DecrementExpr& expr) = 0;
     virtual ~ExprVisitor() = default;

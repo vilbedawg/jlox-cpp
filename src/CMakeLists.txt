@@ -19,6 +19,7 @@ target_sources(BIS
         Environment.cpp
         BisFunction.cpp
         BuiltIn.cpp
+        ListType.cpp
         )
 
 add_executable(main main.cpp)

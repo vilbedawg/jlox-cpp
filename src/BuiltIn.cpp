@@ -35,41 +35,65 @@ namespace bis
 
         for (auto& arg : args)
         {
-            if (!arg.has_value())
+            if (arg.type() == typeid(std::shared_ptr<List>))
             {
-                stream << "nil";
+                const auto items = std::any_cast<std::shared_ptr<List>>(arg);
+                stream << "[";
+                int len = items->length();
+                for (int i = 0; i < len; i++)
+                {
+                    stream << ' ';
+                    stream << stringify(items->at(i));
+                    stream << ",";
+                }
+                stream.seekp(-1, std::ios_base::end);
+                stream << " ]";
             }
-            else if (arg.type() == typeid(bool))
+            else
             {
-                stream << (std::any_cast<bool>(arg) ? "true" : "false");
+                stream << stringify(arg);
             }
-            else if (arg.type() == typeid(double))
-            {
-                auto num_as_string = std::to_string(std::any_cast<double>(arg));
-                // remove trailing zeroes.
-                num_as_string.erase(num_as_string.find_last_not_of('0') + 1, std::string::npos);
-                num_as_string.erase(num_as_string.find_last_not_of('.') + 1, std::string::npos);
-                stream << num_as_string;
-            }
-            else if (arg.type() == typeid(std::string))
-            {
-                auto str = std::any_cast<std::string>(arg);
-                if (str == "\\n")
-                    stream << '\n';
-                else if (str == "\\t")
-                    stream << '\t';
-                else
-                    stream << str;
-            }
-
             stream << ' ';
         }
-        std::cout << stream.str();
+        std::cout << stream.str() << '\n';
         return {};
     }
 
     std::string PrintCallable::toString() const
     {
         return "native print";
+    }
+
+    std::string stringify(const std::any& item)
+    {
+        if (item.type() == typeid(bool))
+            return std::any_cast<bool>(item) ? "true" : "false";
+
+        if (item.type() == typeid(char))
+            return std::to_string(std::any_cast<char>(item));
+
+        if (item.type() == typeid(BisFunction))
+            return std::any_cast<BisFunction>(item).toString();
+
+        if (item.type() == typeid(std::string))
+        {
+            auto str = std::any_cast<std::string>(item);
+            if (str == "\\n")
+                return "\n";
+            else if (str == "\\t")
+                return "\t";
+            else
+                return str;
+        }
+
+        if (item.type() == typeid(double))
+        {
+            auto num_as_string = std::to_string(std::any_cast<double>(item));
+            num_as_string.erase(num_as_string.find_last_not_of('0') + 1, std::string::npos);
+            num_as_string.erase(num_as_string.find_last_not_of('.') + 1, std::string::npos);
+            return num_as_string;
+        }
+
+        return "nil";
     }
 }

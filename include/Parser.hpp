@@ -23,7 +23,6 @@ public:
 
     unique_stmt_ptr declaration();
     unique_stmt_ptr classDecl();
-    unique_stmt_ptr fnDecl();
     unique_stmt_ptr varDeclaration();
     unique_stmt_ptr statement();
     unique_stmt_ptr function(const std::string& kind);
@@ -34,6 +33,10 @@ public:
     unique_stmt_ptr expressionStatement();
     unique_expr_ptr expression();
     unique_expr_ptr assignment();
+    unique_expr_ptr lambda();
+    std::vector<unique_expr_ptr> list();
+    unique_expr_ptr subscript();
+    unique_expr_ptr finishSubscript(unique_expr_ptr identifier);
     unique_expr_ptr orExpression();
     unique_expr_ptr andExpression();
     unique_expr_ptr equality();
@@ -46,7 +49,6 @@ public:
     unique_expr_ptr call();
     unique_expr_ptr finishCall(unique_expr_ptr callee);
     unique_expr_ptr primary();
-    unique_expr_ptr list();
     unique_stmt_ptr printStatement();
     unique_stmt_ptr returnStatement();
     unique_stmt_ptr forInitializer();

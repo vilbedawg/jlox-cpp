@@ -3,7 +3,6 @@
 #include "../include/BuiltIn.hpp"
 #include "../include/Logger.hpp"
 #include "../include/RuntimeException.hpp"
-#include <type_traits>
 
 Interpreter::Interpreter() : global_environment{globals.get()}
 {
@@ -427,6 +426,11 @@ std::any Interpreter::visit(const SuperExpr& expr)
     return std::any{};
 }
 
+std::any Interpreter::visit(const ThisExpr& expr)
+{
+    return std::any{};
+}
+
 std::any Interpreter::visit(const LogicalExpr& expr)
 {
     auto left = evaluate(*expr.left);
@@ -445,14 +449,59 @@ std::any Interpreter::visit(const LogicalExpr& expr)
     return evaluate(*expr.right);
 }
 
-std::any Interpreter::visit(const ThisExpr& expr)
-{
-    return std::any{};
-}
-
 std::any Interpreter::visit(const ListExpr& expr)
 {
-    return std::any{};
+    auto list = std::make_shared<List>();
+    for (const auto& item : expr.items)
+    {
+        assert(item);
+        list->append(evaluate((*item)));
+    }
+
+    return list;
+}
+
+std::any Interpreter::visit(const SubscriptExpr& stmt)
+{
+    auto items = environment->lookup(stmt.identifier);
+    if (items.type() != typeid(std::shared_ptr<List>))
+    {
+        throw RuntimeError(stmt.identifier,
+                           "Object '" + stmt.identifier.lexeme + " is not subscriptable.");
+    }
+
+    auto index = evaluate(*stmt.index);
+    if (index.type() != typeid(double))
+    {
+        throw RuntimeError(stmt.identifier, "Indices must be integers.");
+    }
+
+    int casted_index = std::any_cast<double>(index);
+    int object_size = 0;
+
+    try
+    {
+        auto casted_list = std::any_cast<std::shared_ptr<List>>(items);
+        object_size = casted_list->length();
+
+        if (casted_index < 0)
+        {
+            casted_index = casted_list->length() + casted_index;
+        }
+
+        if (stmt.value)
+        {
+            casted_list->at(casted_index) = evaluate(*stmt.value);
+        }
+
+        return casted_list->at(casted_index);
+    }
+    catch (const std::out_of_range&)
+    {
+        throw RuntimeError(stmt.identifier,
+                           "Index out of range. Index is " + std::to_string(casted_index) +
+                               " but object size is " + std::to_string(object_size));
+    }
 }
 
 std::any Interpreter::visit(const IncrementExpr& expr)
