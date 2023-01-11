@@ -1,6 +1,6 @@
 #include "../include/Interpreter.hpp"
-#include "../include/BisFunction.hpp"
 #include "../include/BuiltIn.hpp"
+#include "../include/FunctionType.hpp"
 #include "../include/Logger.hpp"
 #include "../include/RuntimeException.hpp"
 
@@ -141,7 +141,7 @@ void Interpreter::visit(const ClassStmt& stmt)
 
 void Interpreter::visit(const FnStmt& stmt)
 {
-    environment->define(stmt.identifier.lexeme, BisFunction(&stmt, environment));
+    environment->define(stmt.identifier.lexeme, FunctionType(&stmt, environment));
 }
 
 void Interpreter::visit(const IfStmt& stmt)
@@ -382,9 +382,9 @@ std::any Interpreter::visit(const CallExpr& expr)
     }
 
     std::unique_ptr<Callable> function;
-    if (callee.type() == typeid(BisFunction))
+    if (callee.type() == typeid(FunctionType))
     {
-        function = std::make_unique<BisFunction>(std::any_cast<BisFunction>(callee));
+        function = std::make_unique<FunctionType>(std::any_cast<FunctionType>(callee));
     }
     else if (callee.type() == typeid(bis::ClockCallable))
     {

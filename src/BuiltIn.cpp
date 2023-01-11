@@ -72,8 +72,8 @@ namespace bis
         if (item.type() == typeid(char))
             return std::to_string(std::any_cast<char>(item));
 
-        if (item.type() == typeid(BisFunction))
-            return std::any_cast<BisFunction>(item).toString();
+        if (item.type() == typeid(FunctionType))
+            return std::any_cast<FunctionType>(item).toString();
 
         if (item.type() == typeid(std::string))
         {

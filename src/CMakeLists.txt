@@ -17,7 +17,7 @@ target_sources(BIS
         Token.cpp
         Interpreter.cpp
         Environment.cpp
-        BisFunction.cpp
+        FunctionType.cpp
         BuiltIn.cpp
         ListType.cpp
         )

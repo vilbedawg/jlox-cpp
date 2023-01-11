@@ -1,8 +1,8 @@
 #ifndef BUILT_IN_HPP
 #define BUILT_IN_HPP
 
-#include "BisFunction.hpp"
 #include "Callable.hpp"
+#include "FunctionType.hpp"
 #include <chrono>
 #include <iostream>
 #include <sstream>
