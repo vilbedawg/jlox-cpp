@@ -242,7 +242,7 @@ TEST(ParserTests, IfStatement)
 
     // Elif
     const auto elif_branch = std::move(if_stmt->elif_branches.at(0));
-    
+
     // elif condition => true and true
     const auto elif_condition = dynamic_cast<LogicalExpr*>(elif_branch.condition.get());
     ASSERT_TRUE(elif_condition);
@@ -289,21 +289,151 @@ TEST(ParserTests, IfStatement)
         dynamic_cast<LiteralExpr*>(else_block_stmt->expression.get())->literal));
 }
 
-// Todo: Tests for while and for loops, blocks and for lists when those are done.
-// TEST(ParserTest, TestFor Statement) {
-// const std::string input = "for (var i = 0; i < 10; i++) { x += i; }";
-// Parser p(input);
-// EXPECT_TRUE(p.ParseForStatement());
-//}
+TEST(ParserTests, ForStatement)
+{
+    const auto test_script = R"(
+        for(var i = 0; i < 10; i++) {
+            false;
+        }
+    )";
 
-// TEST(ParserTest, TestWhile Statement) {
-// const std::string input = "while (x < 10) { x++; }";
-// Parser p(input);
-// EXPECT_TRUE(p.ParseWhile Statement());
-//}
+    const auto statements = initParser(test_script);
+    ASSERT_EQ(statements.size(), 1);
 
-// TEST(ParserTest, TestBlock) {
-// const std::string input = "{ var x = 10; y = 20; }";
-// Parser p(input);
-// EXPECT_TRUE(p.ParseBlock());
-//}
+    auto stmt = dynamic_cast<ForStmt*>(statements.at(0).get());
+    ASSERT_TRUE(stmt);
+    auto initializer = dynamic_cast<VarStmt*>(stmt->initializer.get());
+    auto condition = dynamic_cast<BinaryExpr*>(stmt->condition.get());
+    auto increment = dynamic_cast<IncrementExpr*>(stmt->increment.get());
+    auto body = dynamic_cast<BlockStmt*>(stmt->body.get());
+
+    // Initializer
+    // var i = 0;
+    ASSERT_TRUE(initializer);
+    EXPECT_EQ(initializer->identifier.type, TokenType::IDENTIFIER);
+    auto initializer_init = dynamic_cast<LiteralExpr*>(initializer->initializer.get());
+    ASSERT_TRUE(initializer->initializer && initializer_init &&
+                initializer_init->literal.type() == typeid(double));
+    EXPECT_EQ(std::any_cast<double>(initializer_init->literal), 0);
+
+    // condition
+    // i < 10;
+    ASSERT_TRUE(condition);
+    EXPECT_EQ(condition->op.type, TokenType::LESS);
+    auto left = dynamic_cast<VarExpr*>(condition->left.get());
+    auto right = dynamic_cast<LiteralExpr*>(condition->right.get());
+    ASSERT_TRUE(left && right);
+    EXPECT_EQ(left->identifier.type, TokenType::IDENTIFIER);
+    ASSERT_EQ(right->literal.type(), typeid(double));
+    EXPECT_EQ(std::any_cast<double>(right->literal), 10);
+
+    // increment
+    // i++
+    ASSERT_TRUE(increment);
+    EXPECT_EQ(increment->identifier.type, TokenType::IDENTIFIER);
+    EXPECT_EQ(increment->identifier.lexeme, "i");
+    EXPECT_EQ(increment->type, IncrementExpr::Type::POSTFIX);
+
+    // body
+    // { false; }
+    ASSERT_TRUE(body);
+    ASSERT_EQ(body->statements.size(), 1);
+    auto block_stmt = dynamic_cast<ExprStmt*>(body->statements.at(0).get());
+    ASSERT_TRUE(block_stmt);
+    auto literal = dynamic_cast<LiteralExpr*>(block_stmt->expression.get());
+    ASSERT_TRUE(literal);
+    ASSERT_EQ(literal->literal.type(), typeid(bool));
+    EXPECT_FALSE(std::any_cast<bool>(literal->literal));
+}
+
+TEST(ParserTests, WhileStatement)
+{
+    const auto test_script = R"(
+        while (x < 10) { x++; }
+    )";
+
+    const auto statements = initParser(test_script);
+    ASSERT_EQ(statements.size(), 1);
+
+    auto stmt = dynamic_cast<WhileStmt*>(statements.at(0).get());
+    auto condition = dynamic_cast<BinaryExpr*>(stmt->condition.get());
+    auto body = dynamic_cast<BlockStmt*>(stmt->body.get());
+
+    // Condtition
+    ASSERT_TRUE(condition);
+    EXPECT_EQ(condition->op.type, TokenType::LESS);
+    auto left = dynamic_cast<VarExpr*>(condition->left.get());
+    auto right = dynamic_cast<LiteralExpr*>(condition->right.get());
+    ASSERT_TRUE(left && right);
+    EXPECT_EQ(left->identifier.type, TokenType::IDENTIFIER);
+    EXPECT_EQ(left->identifier.lexeme, "x");
+    ASSERT_EQ(right->literal.type(), typeid(double));
+    EXPECT_EQ(std::any_cast<double>(right->literal), 10);
+
+    // Body
+    ASSERT_TRUE(body);
+    ASSERT_EQ(body->statements.size(), 1);
+    auto block_stmt = dynamic_cast<ExprStmt*>(body->statements.at(0).get());
+    ASSERT_TRUE(block_stmt);
+
+    auto increment = dynamic_cast<IncrementExpr*>(block_stmt->expression.get());
+    EXPECT_EQ(increment->identifier.type, TokenType::IDENTIFIER);
+    EXPECT_EQ(increment->identifier.lexeme, "x");
+    EXPECT_EQ(increment->type, IncrementExpr::Type::POSTFIX);
+}
+
+bool checkListValue(const std::any& item)
+{
+    return false;
+}
+
+TEST(ParserTests, List)
+{
+    const auto test_script = R"(
+        var a = [1, "string", false, clock()];
+    )";
+
+    const auto statements = initParser(test_script);
+    ASSERT_EQ(statements.size(), 1);
+
+    auto var = dynamic_cast<VarStmt*>(statements.at(0).get());
+    ASSERT_TRUE(var);
+    EXPECT_EQ(var->identifier.type, TokenType::IDENTIFIER);
+    EXPECT_EQ(var->identifier.lexeme, "a");
+
+    auto list = dynamic_cast<ListExpr*>(var->initializer.get());
+    ASSERT_TRUE(list);
+    EXPECT_EQ(list->items.size(), 4);
+    for (const auto& item : list->items)
+    {
+        if (auto expr = dynamic_cast<LiteralExpr*>(item.get()))
+        {
+            if (expr->literal.type() == typeid(bool))
+            {
+                EXPECT_FALSE(std::any_cast<bool>(expr->literal));
+            }
+
+            else if (expr->literal.type() == typeid(double))
+            {
+                EXPECT_DOUBLE_EQ(std::any_cast<double>(expr->literal), 1);
+            }
+
+            else if (expr->literal.type() == typeid(std::string))
+            {
+                EXPECT_EQ(std::any_cast<std::string>(expr->literal), "string");
+            }
+        }
+        else if (auto call = dynamic_cast<CallExpr*>(item.get()))
+        {
+            ASSERT_TRUE(call);
+            auto caller = dynamic_cast<VarExpr*>(call->callee.get());
+            ASSERT_TRUE(caller);
+            EXPECT_EQ(caller->identifier.type, TokenType::IDENTIFIER);
+            EXPECT_EQ(caller->identifier.lexeme, "clock");
+        }
+        else
+        {
+            EXPECT_ANY_THROW("list items dont match with expected values.");
+        }
+    }
+}
