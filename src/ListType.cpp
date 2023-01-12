@@ -6,7 +6,7 @@ List::List(std::vector<std::any> values)
 {
 }
 
-int List::length() const
+int List::length() const noexcept
 {
     return len;
 }
@@ -22,7 +22,7 @@ void List::append(const std::any& value)
     len += 1;
 }
 
-std::any List::pop()
+std::any List::pop() noexcept
 {
     const auto value = values.back();
     values.pop_back();

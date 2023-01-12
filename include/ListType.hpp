@@ -14,13 +14,13 @@ public:
 
     explicit List(std::vector<std::any> values);
 
-    int length() const;
+    int length() const noexcept;
 
     std::any& at(int index);
 
     void append(const std::any& value);
 
-    std::any pop();
+    std::any pop() noexcept;
 
     void remove(int index);
 };
