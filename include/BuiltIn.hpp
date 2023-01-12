@@ -10,25 +10,30 @@
 
 class ClockCallable : public Callable
 {
-private:
-    size_t arity = 0u;
-
 public:
     size_t getArity() const override;
+
     std::any call(Interpreter& interpreter, const std::vector<std::any>& args) const override;
+
     std::string toString() const override;
+
+private:
+    size_t arity = 0u;
 };
 
 class PrintCallable : public Callable
 {
-private:
-    size_t arity;
-
 public:
     explicit PrintCallable(size_t arity = 0u) : arity{arity} {}
+
     size_t getArity() const override;
+
     std::any call(Interpreter& interpreter, const std::vector<std::any>& args) const override;
+
     std::string toString() const override;
+
+private:
+    size_t arity;
 };
 
 std::string stringify(const std::any& item);

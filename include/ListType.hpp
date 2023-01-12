@@ -5,10 +5,6 @@
 
 class List
 {
-private:
-    std::vector<std::any> values;
-    size_t len = 0u;
-
 public:
     List() = default;
 
@@ -23,4 +19,8 @@ public:
     std::any pop() noexcept;
 
     void remove(int index);
+
+private:
+    std::vector<std::any> values;
+    size_t len = 0u;
 };

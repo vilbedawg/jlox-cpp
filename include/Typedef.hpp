@@ -1,5 +1,6 @@
 #ifndef TYPEDEF_HPP
 #define TYPEDEF_HPP
+
 #include <memory>
 
 struct Expr;

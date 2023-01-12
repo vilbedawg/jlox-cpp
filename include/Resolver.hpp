@@ -1,25 +1,17 @@
-#ifndef INTERPRETER_HPP
-#define INTERPRETER_HPP
+#ifndef RESOLVER_HPP
+#define RESOLVER_HPP
 
-#include "Callable.hpp"
-#include "Environment.hpp"
-#include "ExprNode.hpp"
-#include "ListType.hpp"
-#include "RuntimeError.hpp"
-#include "StmtNode.hpp"
+#include "Interpreter.hpp"
 #include "Visitor.hpp"
+#include <vector>
 
-class Interpreter : public ExprVisitor<std::any>, public StmtVisitor
+class Resolver : public ExprVisitor<std::any>, public StmtVisitor
 {
+private:
+    Interpreter& interpreter;
+
 public:
-    Interpreter();
-
-    Environment& getGlobalEnvironment();
-
-    void interpret(const std::vector<unique_stmt_ptr>& statements);
-
-    void executeBlock(const std::vector<unique_stmt_ptr>& statements,
-                      std::shared_ptr<Environment> enclosing_env);
+    explicit Resolver(Interpreter& interpreter);
 
     std::any visit(const BinaryExpr& expr) override;
     std::any visit(const UnaryExpr& expr) override;
@@ -51,34 +43,12 @@ public:
     void visit(const WhileStmt& stmt) override;
     void visit(const ForStmt& stmt) override;
 
-    class EnvironmentGuard
-    {
-    public:
-        EnvironmentGuard(Interpreter& interpreter, std::shared_ptr<Environment> env);
-
-        ~EnvironmentGuard();
-
-    private:
-        Interpreter& interpreter;
-        std::shared_ptr<Environment> previous_env;
-    };
-
 private:
-    std::unique_ptr<Environment> globals = std::make_unique<Environment>();
-    Environment* const global_environment;
-    std::shared_ptr<Environment> environment;
-
-    void checkNumberOperand(const Token& op, const std::any& operand) const;
-
-    void checkNumberOperands(const Token& op, const std::any& lhs, const std::any& rhs) const;
-
-    bool isTruthy(const std::any& object) const;
-
-    bool isEqual(const std::any& lhs, const std::any& rhs) const;
-
-    std::any evaluate(const Expr& expr);
-
-    void execute(const Stmt& stmt);
+    void resolve(const std::vector<unique_stmt_ptr>& statements);
+    void resolve(const Stmt& stmt);
+    void resolve(const Expr& expr);
+    void beginScope();
+    void endScope();
 };
 
-#endif // INTERPRETER_HPP
+#endif // RESOLVER_HPP
