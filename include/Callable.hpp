@@ -1,5 +1,5 @@
-#ifndef BIS_CALLABLE_HPP
-#define BIS_CALLABLE_HPP
+#ifndef CALLABLE_HPP
+#define CALLABLE_HPP
 
 #include <any>
 #include <string>
@@ -16,4 +16,4 @@ public:
     virtual ~Callable() = default;
 };
 
-#endif // BIS_CALLABLE_HPP
+#endif // CALLABLE_HPP

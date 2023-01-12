@@ -1,5 +1,5 @@
-#ifndef BIS_STMT_HPP
-#define BIS_STMT_HPP
+#ifndef STMT_HPP
+#define STMT_HPP
 
 #include "ExprNode.hpp"
 #include "Token.hpp"
@@ -124,4 +124,4 @@ struct ForStmt : Stmt
             unique_stmt_ptr body);
     void accept(StmtVisitor& visitor) const override;
 };
-#endif // BIS_STMT_HPP
+#endif // STMT_HPP

@@ -26,7 +26,7 @@ target_include_directories(main
 
 target_link_libraries(unit_test
   PUBLIC
-    BIS
+    jlox-cpp
     gtest_main
 )
 

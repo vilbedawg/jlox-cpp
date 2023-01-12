@@ -1,5 +1,5 @@
-#ifndef BIS_ASTPRINTER_HPP
-#define BIS_ASTPRINTER_HPP
+#ifndef ASTPRINTER_HPP
+#define ASTPRINTER_HPP
 #include "ExprNode.hpp"
 #include "Visitor.hpp"
 #include <sstream>
@@ -29,4 +29,4 @@ public:
     std::any visit(const IncrementExpr& expr) override;
     std::any visit(const DecrementExpr& expr) override;
 };
-#endif // BIS_ASTPRINTER_HPP
+#endif // ASTPRINTER_HPP

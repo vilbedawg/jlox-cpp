@@ -6,8 +6,8 @@
 
 Interpreter::Interpreter() : global_environment{globals.get()}
 {
-    globals->define("clock", bis::ClockCallable{});
-    globals->define("print", bis::PrintCallable{});
+    globals->define("clock", ClockCallable{});
+    globals->define("print", PrintCallable{});
     environment = std::move(globals);
 }
 
@@ -386,13 +386,13 @@ std::any Interpreter::visit(const CallExpr& expr)
     {
         function = std::make_unique<FunctionType>(std::any_cast<FunctionType>(callee));
     }
-    else if (callee.type() == typeid(bis::ClockCallable))
+    else if (callee.type() == typeid(ClockCallable))
     {
-        function = std::make_unique<bis::ClockCallable>();
+        function = std::make_unique<ClockCallable>();
     }
-    else if (callee.type() == typeid(bis::PrintCallable))
+    else if (callee.type() == typeid(PrintCallable))
     {
-        function = std::make_unique<bis::PrintCallable>(arguments.size());
+        function = std::make_unique<PrintCallable>(arguments.size());
     }
     else
     {

@@ -1,5 +1,5 @@
-#ifndef BIS_LEXER_HPP
-#define BIS_LEXER_HPP
+#ifndef LEXER_HPP
+#define LEXER_HPP
 
 #include "../include/Token.hpp"
 #include <unordered_map>
@@ -35,4 +35,4 @@ public:
     void identifier();
 };
 
-#endif // BIS_LEXER_HPP
+#endif // LEXER_HPP

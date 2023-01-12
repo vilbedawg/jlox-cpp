@@ -1,5 +1,5 @@
-#ifndef BIS_PARSER_HPP
-#define BIS_PARSER_HPP
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
 #include "../include/Logger.hpp"
 #include "ExprNode.hpp"
@@ -76,4 +76,4 @@ public:
     ParseError error(const Token& token, std::string message) const;
 };
 
-#endif // BIS_PARSER_HPP
+#endif // PARSER_HPP

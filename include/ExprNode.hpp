@@ -1,5 +1,5 @@
-#ifndef BIS_EXPR_HPP
-#define BIS_EXPR_HPP
+#ifndef EXPR_HPP
+#define EXPR_HPP
 
 #include "Token.hpp"
 #include "Typedef.hpp"
@@ -162,4 +162,4 @@ struct SubscriptExpr : Expr
     SubscriptExpr(Token identifier, unique_expr_ptr index, unique_expr_ptr value);
     std::any accept(ExprVisitor<std::any>& visitor) const override;
 };
-#endif // BIS_EXPR_HPP
+#endif // EXPR_HPP

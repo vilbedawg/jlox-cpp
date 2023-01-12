@@ -1,13 +1,13 @@
-add_library(BIS)
+add_library(jlox-cpp)
 
-target_include_directories(BIS
+target_include_directories(jlox-cpp
         PUBLIC
         ${SOURCE_DIR}/include
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-target_sources(BIS
+target_sources(jlox-cpp
         PUBLIC
         ExprNode.cpp
         Lexer.cpp
@@ -36,4 +36,4 @@ target_sources(main
         main.cpp
         )
 
-target_link_libraries(main PRIVATE BIS)
+target_link_libraries(main PRIVATE jlox-cpp)

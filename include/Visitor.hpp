@@ -1,5 +1,5 @@
-#ifndef BIS_VISITOR_HPP
-#define BIS_VISITOR_HPP
+#ifndef VISITOR_HPP
+#define VISITOR_HPP
 #include <any>
 
 struct AssignExpr;

@@ -1,5 +1,5 @@
-#ifndef BIS_INTERPRETER_HPP
-#define BIS_INTERPRETER_HPP
+#ifndef INTERPRETER_HPP
+#define INTERPRETER_HPP
 
 #include "Callable.hpp"
 #include "Environment.hpp"
@@ -72,4 +72,4 @@ public:
     };
 };
 
-#endif // BIS_INTERPRETER_HPP
+#endif // INTERPRETER_HPP

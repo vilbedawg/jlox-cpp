@@ -1,5 +1,5 @@
-#ifndef BIS_ENVIRONMENT_HPP
-#define BIS_ENVIRONMENT_HPP
+#ifndef ENVIRONMENT_HPP
+#define ENVIRONMENT_HPP
 
 #include "RuntimeError.hpp"
 #include "Token.hpp"
@@ -23,4 +23,4 @@ public:
     const std::any& lookup(const Token& identifier);
 };
 
-#endif // BIS_ENVIRONMENT_HPP
+#endif // ENVIRONMENT_HPP

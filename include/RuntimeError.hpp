@@ -1,5 +1,5 @@
-#ifndef BIS_RUNTIME_ERROR_HPP
-#define BIS_RUNTIME_ERROR_HPP
+#ifndef RUNTIME_ERROR_HPP
+#define RUNTIME_ERROR_HPP
 #include "Token.hpp"
 #include <stdexcept>
 
@@ -18,4 +18,4 @@ public:
     const Token& getToken() const { return token; }
 };
 
-#endif // BIS_RUNTIME_ERROR_HPP
+#endif // RUNTIME_ERROR_HPP

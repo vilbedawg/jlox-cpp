@@ -1,5 +1,5 @@
-#ifndef BIS_TOKEN_HPP
-#define BIS_TOKEN_HPP
+#ifndef TOKEN_HPP
+#define TOKEN_HPP
 #include <string>
 
 enum class TokenType
@@ -33,4 +33,4 @@ struct Token
 std::ostream& operator<<(std::ostream& os, const Token& token);
 std::ostream& operator<<(std::ostream& os, const TokenType type);
 
-#endif // BIS_TOKEN_HPP
+#endif // TOKEN_HPP
