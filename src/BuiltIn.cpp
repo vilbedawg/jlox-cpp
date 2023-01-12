@@ -37,8 +37,8 @@ std::any PrintCallable::call(Interpreter& interpreter, const std::vector<std::an
         {
             const auto items = std::any_cast<std::shared_ptr<List>>(arg);
             stream << "[";
-            int len = items->length();
-            for (int i = 0; i < len; i++)
+            auto len = items->length();
+            for (size_t i = 0u; i < len; ++i)
             {
                 stream << ' ';
                 stream << stringify(items->at(i));

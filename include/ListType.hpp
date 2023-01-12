@@ -7,14 +7,14 @@ class List
 {
 private:
     std::vector<std::any> values;
-    int len = 0;
+    size_t len = 0u;
 
 public:
     List() = default;
 
     explicit List(std::vector<std::any> values);
 
-    int length() const noexcept;
+    size_t length() const noexcept;
 
     std::any& at(int index);
 

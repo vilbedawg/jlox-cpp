@@ -1,12 +1,11 @@
 #include "../include/ListType.hpp"
 #include "../include/RuntimeError.hpp"
 
-List::List(std::vector<std::any> values)
-    : values{std::move(values)}, len{static_cast<int>(this->values.size())}
+List::List(std::vector<std::any> values) : values{std::move(values)}, len{this->values.size()}
 {
 }
 
-int List::length() const noexcept
+size_t List::length() const noexcept
 {
     return len;
 }

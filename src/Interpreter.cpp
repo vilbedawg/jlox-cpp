@@ -486,7 +486,7 @@ std::any Interpreter::visit(const SubscriptExpr& stmt)
 
         if (casted_index < 0)
         {
-            casted_index = casted_list->length() + casted_index;
+            casted_index = static_cast<int>(casted_list->length()) + casted_index;
         }
 
         if (stmt.value)
