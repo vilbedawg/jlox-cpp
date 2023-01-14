@@ -3,15 +3,22 @@
 
 #include "Interpreter.hpp"
 #include "Visitor.hpp"
+#include <stack>
+#include <unordered_map>
 #include <vector>
 
 class Resolver : public ExprVisitor<std::any>, public StmtVisitor
 {
-private:
-    Interpreter& interpreter;
-
 public:
     explicit Resolver(Interpreter& interpreter);
+
+    void resolve(const std::vector<unique_stmt_ptr>& statements);
+
+    enum class FuncType
+    {
+        NONE,
+        FUNCTION
+    };
 
     std::any visit(const BinaryExpr& expr) override;
     std::any visit(const UnaryExpr& expr) override;
@@ -44,11 +51,27 @@ public:
     void visit(const ForStmt& stmt) override;
 
 private:
-    void resolve(const std::vector<unique_stmt_ptr>& statements);
+    Interpreter& interpreter;
+    using Scope = std::unordered_map<std::string, bool>;
+    std::vector<Scope> scopes;
+    std::stack<FuncType> func_stack;
+    size_t loop_nesting_level = 0u;
+
     void resolve(const Stmt& stmt);
+
     void resolve(const Expr& expr);
+
+    void resolveLocal(const Expr* expr, const Token& name);
+
+    void resolveFuntion(const FnStmt& stmt, FuncType type);
+
     void beginScope();
+
     void endScope();
+
+    void declare(const Token& identifier);
+
+    void define(const Token& identifer);
 };
 
 #endif // RESOLVER_HPP

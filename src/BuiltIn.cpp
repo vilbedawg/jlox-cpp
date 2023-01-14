@@ -30,28 +30,9 @@ size_t PrintCallable::getArity() const
 std::any PrintCallable::call(Interpreter& interpreter, const std::vector<std::any>& args) const
 {
     std::stringstream stream;
-
     for (auto& arg : args)
     {
-        if (arg.type() == typeid(std::shared_ptr<List>))
-        {
-            const auto items = std::any_cast<std::shared_ptr<List>>(arg);
-            stream << "[";
-            auto len = items->length();
-            for (size_t i = 0u; i < len; ++i)
-            {
-                stream << ' ';
-                stream << stringify(items->at(i));
-                stream << ",";
-            }
-            stream.seekp(-1, std::ios_base::end);
-            stream << " ]";
-        }
-        else
-        {
-            stream << stringify(arg);
-        }
-        stream << ' ';
+        stream << stringify(arg, stream) << ' ';
     }
     std::cout << stream.str() << '\n';
     return {};
@@ -62,7 +43,7 @@ std::string PrintCallable::toString() const
     return "native print";
 }
 
-std::string stringify(const std::any& item)
+std::string stringify(const std::any& item, std::stringstream& stream)
 {
     if (item.type() == typeid(bool))
         return std::any_cast<bool>(item) ? "true" : "false";
@@ -90,6 +71,27 @@ std::string stringify(const std::any& item)
         num_as_string.erase(num_as_string.find_last_not_of('0') + 1, std::string::npos);
         num_as_string.erase(num_as_string.find_last_not_of('.') + 1, std::string::npos);
         return num_as_string;
+    }
+
+    if (item.type() == typeid(int))
+    {
+        return std::to_string(std::any_cast<int>(item));
+    }
+
+    if (item.type() == typeid(std::shared_ptr<List>))
+    {
+        auto items = std::any_cast<std::shared_ptr<List>>(item);
+        stream << "[";
+        auto len = items->length();
+        for (size_t i = 0u; i < len; ++i)
+        {
+            stream << ' ';
+            stream << stringify(items->at(static_cast<int>(i)), stream);
+            stream << ",";
+        }
+        stream.seekp(-1, std::ios_base::end);
+        stream << " ]";
+        return {};
     }
 
     return "nil";

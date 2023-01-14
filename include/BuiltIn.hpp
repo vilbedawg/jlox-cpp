@@ -36,6 +36,6 @@ private:
     size_t arity;
 };
 
-std::string stringify(const std::any& item);
+std::string stringify(const std::any& item, std::stringstream& stream);
 
 #endif // BUILT_IN_HPP

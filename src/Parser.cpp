@@ -1,4 +1,5 @@
 #include "../include/Parser.hpp"
+#define void_cast(x) (static_cast<void>(x))
 
 Parser::Parser(std::vector<Token> tokens) : tokens{std::move(tokens)}
 {
@@ -41,13 +42,13 @@ unique_stmt_ptr Parser::controlStatement()
     unique_stmt_ptr stmt;
     if (token.type == TokenType::BREAK)
     {
-        consume(TokenType::SEMICOLON, "Expect ';' after break.");
+        void_cast(consume(TokenType::SEMICOLON, "Expect ';' after break."));
         stmt = std::make_unique<BreakStmt>(std::move(token));
     }
 
     else if (token.type == TokenType::CONTINUE)
     {
-        consume(TokenType::SEMICOLON, "Expect ';' after continue.");
+        void_cast(consume(TokenType::SEMICOLON, "Expect ';' after continue)."));
         stmt = std::make_unique<ContinueStmt>(std::move(token));
     }
 
@@ -78,14 +79,14 @@ unique_expr_ptr Parser::forExpression(TokenType type, std::string msg)
         expr = expression();
     }
 
-    consume(type, std::move(msg));
+    void_cast(consume(type, std::move(msg)));
 
     return expr;
 }
 
 unique_stmt_ptr Parser::forStatement()
 {
-    consume(TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
+    void_cast(consume(TokenType::LEFT_PAREN, "Expect '(' after 'for'."));
     auto initializer = forInitializer();
     auto condition = forExpression(TokenType::SEMICOLON, "Expect ';' after loop condition.");
     auto increment = forExpression(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
@@ -97,9 +98,9 @@ unique_stmt_ptr Parser::forStatement()
 
 unique_stmt_ptr Parser::ifStatement()
 {
-    consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
+    void_cast(consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'."));
     auto if_condition = expression();
-    consume(TokenType::RIGHT_PAREN, "Expect ')' after 'if condition.");
+    void_cast(consume(TokenType::RIGHT_PAREN, "Expect ')' after 'if condition."));
     auto then_statement = statement();
 
     IfBranch main_branch{std::move(if_condition), std::move(then_statement)};
@@ -107,9 +108,9 @@ unique_stmt_ptr Parser::ifStatement()
 
     while (match({TokenType::ELIF}))
     {
-        consume(TokenType::LEFT_PAREN, "Expect '(' after 'elif'.");
+        void_cast(consume(TokenType::LEFT_PAREN, "Expect '(' after 'elif'."));
         auto elif_condition = expression();
-        consume(TokenType::RIGHT_PAREN, "Expect ')' after 'elif'.");
+        void_cast(consume(TokenType::RIGHT_PAREN, "Expect ')' after 'elif'."));
         auto elif_statement = statement();
         elif_branches.emplace_back(std::move(elif_condition), std::move(elif_statement));
     }
@@ -153,7 +154,7 @@ unique_stmt_ptr Parser::printStatement()
     }
 
     auto expr = finishCall(std::make_unique<VarExpr>(std::move(identifier)));
-    consume(TokenType::SEMICOLON, "Expect ';' after print statement.");
+    void_cast(consume(TokenType::SEMICOLON, "Expect ';' after print statement."));
 
     return std::make_unique<PrintStmt>(std::move(expr));
 }
@@ -167,26 +168,25 @@ unique_stmt_ptr Parser::returnStatement()
         value = expression();
     }
 
-    consume(TokenType::SEMICOLON, "Expect ';' after return value.");
+    void_cast(consume(TokenType::SEMICOLON, "Expect ';' after return value."));
 
     return std::make_unique<ReturnStmt>(std::move(keyword), std::move(value));
 }
 
 unique_stmt_ptr Parser::varDeclaration()
 {
-    consume(TokenType::IDENTIFIER, "Expect variable name.");
-    auto identifier = previous();
+    auto identifier = consume(TokenType::IDENTIFIER, "Expect variable name.");
     auto initializer = match({TokenType::EQUAL}) ? expression() : nullptr;
-    consume(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
+    void_cast(consume(TokenType::SEMICOLON, "Expect ';' after variable declaration."));
 
     return std::make_unique<VarStmt>(std::move(identifier), std::move(initializer));
 }
 
 unique_stmt_ptr Parser::whileStatement()
 {
-    consume(TokenType::LEFT_PAREN, "Expect a '(' after 'while'.");
+    void_cast(consume(TokenType::LEFT_PAREN, "Expect a '(' after 'while'."));
     auto condition = expression();
-    consume(TokenType::RIGHT_PAREN, "Expect a ')' after 'while'.");
+    void_cast(consume(TokenType::RIGHT_PAREN, "Expect a ')' after 'while'."));
     auto body = statement();
 
     return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
@@ -195,16 +195,15 @@ unique_stmt_ptr Parser::whileStatement()
 unique_stmt_ptr Parser::expressionStatement()
 {
     auto expr = expression();
-    consume(TokenType::SEMICOLON, "Expect ';' after value.");
+    void_cast(consume(TokenType::SEMICOLON, "Expect ';' after value."));
 
     return std::make_unique<ExprStmt>(std::move(expr));
 }
 
 unique_stmt_ptr Parser::function(const std::string& kind)
 {
-    consume(TokenType::IDENTIFIER, "Expect " + kind + " name.");
-    auto identifier = previous();
-    consume(TokenType::LEFT_PAREN, "Expect '(' after " + kind + " name.");
+    auto identifier = consume(TokenType::IDENTIFIER, "Expect " + kind + " name.");
+    void_cast(consume(TokenType::LEFT_PAREN, "Expect '(' after " + kind + " name."));
     std::vector<Token> params;
     if (!check(TokenType::RIGHT_PAREN))
     {
@@ -215,13 +214,13 @@ unique_stmt_ptr Parser::function(const std::string& kind)
                 error(peek(), "Can't exceed more than 254 parameters.");
             }
 
-            consume(TokenType::IDENTIFIER, "Expect parameter name.");
-            params.emplace_back(previous());
+            auto parameter = consume(TokenType::IDENTIFIER, "Expect parameter name.");
+            params.emplace_back(parameter);
         } while (match({TokenType::COMMA}));
     }
 
-    consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
-    consume(TokenType::LEFT_BRACE, "Expect '{' before " + kind + " body.");
+    void_cast(consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters."));
+    void_cast(consume(TokenType::LEFT_BRACE, "Expect '{' before " + kind + " body."));
 
     auto body = block();
 
@@ -236,7 +235,7 @@ std::vector<unique_stmt_ptr> Parser::block()
         statements.emplace_back(declaration());
     }
 
-    consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
+    void_cast(consume(TokenType::RIGHT_BRACE, "Expect '}' after block."));
 
     return statements;
 }
@@ -316,7 +315,7 @@ unique_expr_ptr Parser::binary(Fn func, const std::initializer_list<TokenType>& 
 
     while (match(token_args))
     {
-        const auto op = previous();
+        const auto& op = previous();
         auto right = func();
         expr = std::make_unique<BinaryExpr>(std::move(expr), op, std::move(right));
     }
@@ -350,7 +349,7 @@ unique_expr_ptr Parser::unary()
 {
     if (match({TokenType::EXCLAMATION, TokenType::MINUS}))
     {
-        auto op = previous();
+        const auto& op = previous();
         auto right = unary();
 
         return std::make_unique<UnaryExpr>(std::move(op), std::move(right));
@@ -363,11 +362,9 @@ unique_expr_ptr Parser::prefix()
 {
     if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
     {
-        auto op = previous();
-        consume(TokenType::IDENTIFIER,
-                "Operators '++' and '--' must be applied to and lvalue operand.");
-
-        auto lvalue = previous();
+        const auto& op = previous();
+        auto lvalue = consume(TokenType::IDENTIFIER,
+                              "Operators '++' and '--' must be applied to and lvalue operand.");
 
         if (lvalue.type == TokenType::PLUS_PLUS || lvalue.type == TokenType::MINUS_MINUS)
         {
@@ -436,8 +433,8 @@ unique_expr_ptr Parser::finishCall(unique_expr_ptr callee)
         } while (match({TokenType::COMMA}));
     }
 
-    consume(TokenType::RIGHT_PAREN, "Except ')' after arguments.");
-    auto paren = previous();
+    auto paren = consume(TokenType::RIGHT_PAREN, "Except ')' after arguments.");
+
     return std::make_unique<CallExpr>(std::move(callee), std::move(paren), std::move(arguments));
 }
 
@@ -463,7 +460,7 @@ unique_expr_ptr Parser::call()
 unique_expr_ptr Parser::finishSubscript(unique_expr_ptr identifier)
 {
     auto index = orExpression();
-    consume(TokenType::RIGHT_BRACKET, "Expect ']' after arguments.");
+    void_cast(consume(TokenType::RIGHT_BRACKET, "Expect ']' after arguments."));
     auto var = dynamic_cast<VarExpr*>(identifier.release())->identifier;
 
     return std::make_unique<SubscriptExpr>(std::move(var), std::move(index), nullptr);
@@ -552,7 +549,7 @@ unique_expr_ptr Parser::primary()
     if (match({LEFT_PAREN}))
     {
         auto expr = expression();
-        consume(RIGHT_PAREN, "Expect ')' after expression.");
+        void_cast(consume(RIGHT_PAREN, "Expect ')' after expression."));
 
         return std::make_unique<GroupingExpr>(std::move(expr));
     }
@@ -561,7 +558,7 @@ unique_expr_ptr Parser::primary()
     {
         auto opening_bracket = previous();
         auto expr = list();
-        consume(TokenType::RIGHT_BRACKET, "Expect ']' at the end of a list.");
+        void_cast(consume(TokenType::RIGHT_BRACKET, "Expect ']' at the end of a list."));
 
         return std::make_unique<ListExpr>(std::move(opening_bracket), std::move(expr));
     }
@@ -581,7 +578,7 @@ bool Parser::match(const std::initializer_list<TokenType> token_args)
     return is_match;
 }
 
-void Parser::consume(TokenType type, std::string msg)
+Token Parser::consume(TokenType type, std::string msg)
 {
     if (!check(type))
     {
@@ -589,6 +586,7 @@ void Parser::consume(TokenType type, std::string msg)
     }
 
     advance();
+    return previous();
 }
 
 bool Parser::check(TokenType type) const
@@ -619,7 +617,7 @@ const Token& Parser::peek() const
     return tokens[current];
 }
 
-const Token& Parser::previous() const
+Token Parser::previous() const
 {
     return tokens[current - 1];
 }

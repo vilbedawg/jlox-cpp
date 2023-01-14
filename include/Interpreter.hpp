@@ -8,18 +8,19 @@
 #include "RuntimeError.hpp"
 #include "StmtNode.hpp"
 #include "Visitor.hpp"
+#include <unordered_map>
 
 class Interpreter : public ExprVisitor<std::any>, public StmtVisitor
 {
 public:
     Interpreter();
 
-    Environment& getGlobalEnvironment();
-
     void interpret(const std::vector<unique_stmt_ptr>& statements);
 
     void executeBlock(const std::vector<unique_stmt_ptr>& statements,
                       std::shared_ptr<Environment> enclosing_env);
+
+    void resolve(const Expr& expr_ptr, size_t depth);
 
     std::any visit(const BinaryExpr& expr) override;
     std::any visit(const UnaryExpr& expr) override;
@@ -67,6 +68,7 @@ private:
     std::unique_ptr<Environment> globals = std::make_unique<Environment>();
     Environment* const global_environment;
     std::shared_ptr<Environment> environment;
+    std::unordered_map<const Expr*, size_t> locals;
 
     void checkNumberOperand(const Token& op, const std::any& operand) const;
 
@@ -79,6 +81,11 @@ private:
     std::any evaluate(const Expr& expr);
 
     void execute(const Stmt& stmt);
+
+    std::any lookUpVariable(const Token& identifier, const Expr*) const;
+
+    void assignVariable(const Expr* expr_ptr, const Token& identifier,
+                                     const std::any& value);
 };
 
 #endif // INTERPRETER_HPP

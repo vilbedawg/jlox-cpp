@@ -3,10 +3,10 @@
 
 #include "RuntimeError.hpp"
 #include "Token.hpp"
-#include <algorithm>
 #include <any>
 #include <cassert>
 #include <memory>
+#include <unordered_map>
 
 class Environment
 {
@@ -20,6 +20,12 @@ public:
     void assign(const Token& identifier, const std::any& value);
 
     const std::any& lookup(const Token& identifier);
+
+    std::any getAt(size_t distance, const std::string& identifier);
+
+    void assignAt(size_t distance, const Token& identifier, const std::any& value);
+
+    Environment* ancestor(size_t distance);
 
 private:
     std::shared_ptr<Environment> parent_env;

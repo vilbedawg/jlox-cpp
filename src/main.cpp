@@ -2,6 +2,7 @@
 #include "../include/Lexer.hpp"
 #include "../include/Logger.hpp"
 #include "../include/Parser.hpp"
+#include "../include/Resolver.hpp"
 
 #include <fstream>
 
@@ -30,14 +31,32 @@ void run(const std::string& source)
     Parser parser{std::move(tokens)};
     const auto statements = parser.parse();
 
-    if (Error::hadError || Error::hadRuntimeError)
+    // Stop if there were any syntax errors.
+    if (Error::hadError)
     {
         Error::report();
         return;
     }
 
     Interpreter interpreter;
+
+    Resolver resolver{interpreter};
+    resolver.resolve(statements);
+
+    // Stop if there were any resolution errors.
+    if (Error::hadError)
+    {
+        Error::report();
+        return;
+    }
+
     interpreter.interpret(statements);
+
+    // Report all runtime errors, if any.
+    if (Error::hadRuntimeError)
+    {
+        Error::report();
+    }
 }
 
 void initFile(const std::string& filename)

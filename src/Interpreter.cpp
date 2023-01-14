@@ -1,6 +1,5 @@
 #include "../include/Interpreter.hpp"
 #include "../include/BuiltIn.hpp"
-#include "../include/FunctionType.hpp"
 #include "../include/Logger.hpp"
 #include "../include/RuntimeException.hpp"
 
@@ -15,10 +14,10 @@ void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
 {
     try
     {
-        for (const auto& ptr : statements)
+        for (const auto& stmt : statements)
         {
-            assert(ptr != nullptr);
-            execute(*ptr);
+            assert(stmt != nullptr);
+            execute(*stmt);
         }
     }
     catch (const RuntimeError& error)
@@ -29,8 +28,6 @@ void Interpreter::interpret(const std::vector<unique_stmt_ptr>& statements)
     {
         // Do nothing.
     }
-
-    Error::report();
 }
 
 std::any Interpreter::evaluate(const Expr& expr)
@@ -46,6 +43,7 @@ void Interpreter::execute(const Stmt& stmt)
 void Interpreter::executeBlock(const std::vector<unique_stmt_ptr>& statements,
                                std::shared_ptr<Environment> enclosing_env)
 {
+    // Enter a new environment.
     EnvironmentGuard environment_guard{*this, std::move(enclosing_env)};
     for (const auto& statement : statements)
     {
@@ -65,6 +63,8 @@ void Interpreter::checkNumberOperand(const Token& op, const std::any& operand) c
 void Interpreter::checkNumberOperands(const Token& op, const std::any& lhs,
                                       const std::any& rhs) const
 {
+    // Throws a runtime error if either the left-hand side or the right-hand side operand is not of
+    // type double.
     if (lhs.type() != typeid(double) || rhs.type() != typeid(double))
     {
         throw RuntimeError(op, "Operands must be numbers.");
@@ -73,21 +73,27 @@ void Interpreter::checkNumberOperands(const Token& op, const std::any& lhs,
 
 bool Interpreter::isTruthy(const std::any& object) const
 {
+    // Checks if the passed in object is considered "truthy".
+
+    // This case would indicate a null value.
     if (!object.has_value())
     {
         return false;
     }
 
+    // If the object is of type bool, return the cast value.
     if (object.type() == typeid(bool))
     {
         return std::any_cast<bool>(object);
     }
 
+    // Object has value and is not a false boolean, Therefore it is considered truthy.
     return true;
 }
 
 bool Interpreter::isEqual(const std::any& lhs, const std::any& rhs) const
 {
+    // Checks if two `std::any` objects are equal.
     if (!lhs.has_value() && !rhs.has_value())
     {
         return true;
@@ -117,7 +123,42 @@ bool Interpreter::isEqual(const std::any& lhs, const std::any& rhs) const
         return std::any_cast<std::string>(lhs) == std::any_cast<std::string>(rhs);
     }
 
+    // If the type is not bool, double, or std::string, return false
     return false;
+}
+
+void Interpreter::resolve(const Expr& expr_ptr, size_t distance)
+{
+    locals.try_emplace(&expr_ptr, distance);
+}
+
+std::any Interpreter::lookUpVariable(const Token& identifier, const Expr* expr_ptr) const
+{
+    if (locals.contains(expr_ptr))
+    {
+        size_t distance = locals.at(expr_ptr);
+        return environment->getAt(distance, identifier.lexeme);
+    }
+
+    return global_environment->lookup(identifier);
+}
+
+void Interpreter::assignVariable(const Expr* expr_ptr, const Token& identifier,
+                                 const std::any& value)
+{
+    // Check if the variable is defined in the local scope.
+    if (locals.contains(expr_ptr))
+    {
+        // If so, assign the value to the variable at the specific environment.
+        size_t distance = locals.at(expr_ptr);
+        environment->assignAt(distance, identifier, value);
+    }
+    // If the variable is not defined in the local scope.
+    else
+    {
+        // Assign the value to the variable in the global scope.
+        global_environment->assign(identifier, value);
+    }
 }
 
 void Interpreter::visit(const ExprStmt& stmt)
@@ -146,14 +187,18 @@ void Interpreter::visit(const FnStmt& stmt)
 
 void Interpreter::visit(const IfStmt& stmt)
 {
+    // Check if the main branch condition is truthy
     if (isTruthy(evaluate(*stmt.main_branch.condition)))
     {
+        // If it is, execute the statement
         execute(*stmt.main_branch.statement);
         return;
     }
 
+    // Check each elif branch
     for (const auto& elif : stmt.elif_branches)
     {
+        // If any elif branch's condition is truthy, execute its statement and return
         if (isTruthy(evaluate(*elif.condition)))
         {
             execute(*elif.statement);
@@ -161,6 +206,7 @@ void Interpreter::visit(const IfStmt& stmt)
         }
     }
 
+    // If none of the conditions are true and there is an else branch, execute it.
     if (stmt.else_branch)
     {
         execute(*stmt.else_branch);
@@ -170,6 +216,7 @@ void Interpreter::visit(const IfStmt& stmt)
 void Interpreter::visit(const ReturnStmt& stmt)
 {
     std::any value;
+    // If the return statement is not void, evaluate the expression.
     if (stmt.expression)
     {
         value = evaluate(*stmt.expression);
@@ -191,26 +238,32 @@ void Interpreter::visit(const ContinueStmt& stmt)
 void Interpreter::visit(const VarStmt& stmt)
 {
     std::any value;
+    // If the variable has an initializer, evaluate the initializer.
     if (stmt.initializer)
     {
         value = evaluate(*stmt.initializer);
     }
 
+    // Define the variable in the current environment with the given identifier and value
     environment->define(stmt.identifier.lexeme, value);
 }
 
 void Interpreter::visit(const WhileStmt& stmt)
 {
+    // While the while loop condition is truthy.
     while (isTruthy(evaluate(*stmt.condition)))
     {
         try
         {
+            // Execute the loop's body.
             execute(*stmt.body);
         }
+        // If a break statement is encountered, exit the loop.
         catch (const ContinueException&)
         {
-            // Do nothing
+            // Do nothing.
         }
+        // If a continue statement is encountered, continue to the next iteration.
         catch (const BreakException&)
         {
             return;
@@ -220,32 +273,37 @@ void Interpreter::visit(const WhileStmt& stmt)
 
 void Interpreter::visit(const ForStmt& stmt)
 {
+    // Enter a new environment.
     EnvironmentGuard environment_guard{*this, environment};
 
+    // If the for loop has an initializer, we execute it.
     if (stmt.initializer)
     {
         execute(*stmt.initializer);
     }
 
-    if (!stmt.condition)
-    {
-        return;
-    }
+    // No condition can be interpreted as 'while true'.
+    bool no_condition = stmt.condition == nullptr;
 
-    while (isTruthy(evaluate(*stmt.condition)))
+    // While the for loop condition is truthy.
+    while (no_condition || isTruthy(evaluate(*stmt.condition)))
     {
         try
         {
+            // Execute the for loop's body.
             execute(*stmt.body);
+            // If the for loop has an increment, execute it.
             if (stmt.increment)
             {
                 evaluate(*stmt.increment);
             }
         }
+        // If a break statement is encountered, exit the loop.
         catch (const BreakException&)
         {
             return;
         }
+        // If a continue statement is encountered, continue to the next iteration.
         catch (const ContinueException&)
         {
             if (stmt.increment)
@@ -258,9 +316,12 @@ void Interpreter::visit(const ForStmt& stmt)
 
 std::any Interpreter::visit(const BinaryExpr& expr)
 {
-    using enum TokenType;
+    // Evaluate the left-hand side and right-hand side operands of the binary expression
     auto left = evaluate(*expr.left);
     auto right = evaluate(*expr.right);
+
+    using enum TokenType;
+    // Check the type of the operator.
     switch (expr.op.type)
     {
     case MINUS:
@@ -269,6 +330,8 @@ std::any Interpreter::visit(const BinaryExpr& expr)
 
     case SLASH:
         checkNumberOperands(expr.op, left, right);
+
+        // Throw error if right operand is 0.
         if (std::any_cast<double>(right) == 0)
         {
             throw RuntimeError(expr.op, "Division by 0.");
@@ -312,7 +375,7 @@ std::any Interpreter::visit(const BinaryExpr& expr)
         }
         else if (left.type() == typeid(double) && right.type() == typeid(std::string))
         {
-
+            // Remove trailing zeroes.
             std::string num_as_string = std::to_string(std::any_cast<double>(left));
             num_as_string.erase(num_as_string.find_last_not_of('0') + 1, std::string::npos);
             num_as_string.erase(num_as_string.find_last_not_of('.') + 1, std::string::npos);
@@ -320,6 +383,7 @@ std::any Interpreter::visit(const BinaryExpr& expr)
         }
         else if (left.type() == typeid(std::string) && right.type() == typeid(double))
         {
+            // Remove trailing zeroes.
             std::string num_as_string = std::to_string(std::any_cast<double>(right));
             num_as_string.erase(num_as_string.find_last_not_of('0') + 1, std::string::npos);
             num_as_string.erase(num_as_string.find_last_not_of('.') + 1, std::string::npos);
@@ -335,22 +399,30 @@ std::any Interpreter::visit(const BinaryExpr& expr)
 
 std::any Interpreter::visit(const UnaryExpr& expr)
 {
-    std::any right = evaluate(*expr.right);
+    // Evaluate the right-hand side operand of the unary expression.
+    auto right = evaluate(*expr.right);
+
+    // Check the type of the operator
     switch (expr.op.type)
     {
     case TokenType::MINUS:
+        // Ensure that the right-hand side operand is a number.
         checkNumberOperand(expr.op, right);
+        // Return the negation of the right-hand side operand.
         return -(std::any_cast<double>(right));
+
     case TokenType::EXCLAMATION:
+        // Return the negation of the truthiness of the right-hand side operand.
         return !isTruthy(right);
+
     default:
-        return std::any{};
+        return {};
     }
 }
 
 std::any Interpreter::visit(const VarExpr& expr)
 {
-    return environment->lookup(expr.identifier);
+    return lookUpVariable(expr.identifier, &expr);
 }
 
 std::any Interpreter::visit(const GroupingExpr& expr)
@@ -365,15 +437,20 @@ std::any Interpreter::visit(const LiteralExpr& expr)
 
 std::any Interpreter::visit(const AssignExpr& expr)
 {
+    // Evaluate the assigned value.
     auto value = evaluate(*expr.value);
-    environment->assign(expr.identifier, value);
+    // Assign the new value to the variable.
+    assignVariable(&expr, expr.identifier, value);
+
     return value;
 }
 
 std::any Interpreter::visit(const CallExpr& expr)
 {
+    // Evaluate the callee (the function or class being called).
     auto callee = evaluate(*expr.callee);
 
+    // Collect the arguments passed to the function or class.
     std::vector<std::any> arguments;
     arguments.reserve(expr.args.size());
     for (const auto& arg : expr.args)
@@ -381,6 +458,7 @@ std::any Interpreter::visit(const CallExpr& expr)
         arguments.emplace_back(evaluate(*arg));
     }
 
+    // Prevent calling objects which are not of callable type.
     std::unique_ptr<Callable> function;
     if (callee.type() == typeid(FunctionType))
     {
@@ -396,11 +474,14 @@ std::any Interpreter::visit(const CallExpr& expr)
     }
     else
     {
+        // Throw an error if the callee is not callable (a function or class).
         throw RuntimeError(expr.paren,
                            expr.paren.lexeme +
                                " is not callable. Callable object must be a function or a class.");
     }
 
+    // Check that the number of arguments passed to the function or class
+    // matches the expected number
     if (arguments.size() != function->getArity())
     {
         throw RuntimeError(expr.paren, "Expected " + std::to_string(function->getArity()) +
@@ -408,6 +489,7 @@ std::any Interpreter::visit(const CallExpr& expr)
                                            std::to_string(arguments.size()) + " .");
     }
 
+    // returns by calling the function.
     return function->call(*this, arguments);
 }
 
@@ -433,7 +515,10 @@ std::any Interpreter::visit(const ThisExpr& expr)
 
 std::any Interpreter::visit(const LogicalExpr& expr)
 {
+    // Evaluate the left operand of the logical expression.
     auto left = evaluate(*expr.left);
+
+    // If the operator is OR and the left operand is truthy, return the left operand.
     if (expr.op.type == TokenType::OR)
     {
         if (isTruthy(left))
@@ -441,17 +526,21 @@ std::any Interpreter::visit(const LogicalExpr& expr)
             return left;
         }
     }
+    // If the operator is AND and the left operand is falsy, return the left operand.
     else if (!isTruthy(left))
     {
         return left;
     }
 
+    // If the left operand didn't short-circuit the evaluation, evaluate the right operand and
+    // return it.
     return evaluate(*expr.right);
 }
 
 std::any Interpreter::visit(const ListExpr& expr)
 {
     auto list = std::make_shared<List>();
+    // Evaluate each item contained in the list.
     for (const auto& item : expr.items)
     {
         assert(item);
@@ -463,90 +552,114 @@ std::any Interpreter::visit(const ListExpr& expr)
 
 std::any Interpreter::visit(const SubscriptExpr& stmt)
 {
-    auto items = environment->lookup(stmt.identifier);
-    if (items.type() != typeid(std::shared_ptr<List>))
+    auto value = lookUpVariable(stmt.identifier, &stmt);
+
+    // Check if the value is a list, if not throw a runtime error.
+    if (value.type() != typeid(std::shared_ptr<List>))
     {
         throw RuntimeError(stmt.identifier,
                            "Object '" + stmt.identifier.lexeme + " is not subscriptable.");
     }
 
-    auto index = evaluate(*stmt.index);
-    if (index.type() != typeid(double))
+    // Evaluate the index expression.
+    auto index_value = evaluate(*stmt.index);
+    int index_cast;
+    size_t object_size = 0u; // Refers to the size of the original list object.
+
+    if (index_value.type() == typeid(double))
+    {
+        index_cast = static_cast<int>(std::any_cast<double>(index_value));
+    }
+    else if (index_value.type() == typeid(int))
+    {
+        index_cast = std::any_cast<int>(index_value);
+    }
+    else
     {
         throw RuntimeError(stmt.identifier, "Indices must be integers.");
     }
 
-    int casted_index = std::any_cast<double>(index);
-    int object_size = 0;
-
     try
     {
-        auto casted_list = std::any_cast<std::shared_ptr<List>>(items);
-        object_size = casted_list->length();
+        // Get the shared pointer to the list.
+        auto list_ptr = std::any_cast<std::shared_ptr<List>>(value);
+        object_size = list_ptr->length();
 
-        if (casted_index < 0)
+        // Allows negative indexes for reverse order.
+        if (index_cast < 0)
         {
-            casted_index = static_cast<int>(casted_list->length()) + casted_index;
+            index_cast = static_cast<int>(list_ptr->length()) + index_cast;
         }
 
+        // If value is associated with the subscript expression, new value will be assigned to the
+        // corresponding index.
         if (stmt.value)
         {
-            casted_list->at(casted_index) = evaluate(*stmt.value);
+            list_ptr->at(index_cast) = evaluate(*stmt.value);
         }
 
-        return casted_list->at(casted_index);
+        // Return the value at index.
+        return list_ptr->at(index_cast);
     }
     catch (const std::out_of_range&)
     {
         throw RuntimeError(stmt.identifier,
-                           "Index out of range. Index is " + std::to_string(casted_index) +
+                           "Index out of range. Index is " + std::to_string(index_cast) +
                                " but object size is " + std::to_string(object_size));
     }
 }
 
 std::any Interpreter::visit(const IncrementExpr& expr)
 {
-    const auto variable = environment->lookup(expr.identifier);
+    // Get the current value of the variable that is being incremented.
+    const auto old_value = lookUpVariable(expr.identifier, &expr);
 
-    if (variable.type() != typeid(double))
+    if (old_value.type() != typeid(double))
     {
         throw RuntimeError(expr.identifier,
                            "Cannot increment a non integer type '" + expr.identifier.lexeme + "'.");
     }
 
-    const auto incremented_variable = std::any_cast<double>(variable) + 1;
-    environment->assign(expr.identifier, incremented_variable);
-
-    return expr.type == IncrementExpr::Type::POSTFIX ? variable : incremented_variable;
+    // Increment the value by 1.
+    const double new_value = std::any_cast<double>(old_value) + 1;
+    // Assign the new value to the variable.
+    assignVariable(&expr, expr.identifier, new_value);
+    // If the expression is a postfix increment, return the old value
+    // otherwise return the new value.
+    return expr.type == IncrementExpr::Type::POSTFIX ? old_value : new_value;
 }
 
 std::any Interpreter::visit(const DecrementExpr& expr)
 {
-    const auto variable = environment->lookup(expr.identifier);
+    // Get the current value of the variable that is being incremented.
+    const auto old_value = lookUpVariable(expr.identifier, &expr);
 
-    if (variable.type() != typeid(double))
+    if (old_value.type() != typeid(double))
     {
         throw RuntimeError(expr.identifier,
                            "Cannot decrement a non integer type '" + expr.identifier.lexeme + "'.");
     }
 
-    const auto decremented_variable = std::any_cast<double>(variable) - 1;
-    environment->assign(expr.identifier, decremented_variable);
-
-    return expr.type == DecrementExpr::Type::POSTFIX ? variable : decremented_variable;
+    // Decrement the value by 1.
+    const double new_value = std::any_cast<double>(old_value) - 1;
+    // Assign the new value to the variable.
+    assignVariable(&expr, expr.identifier, new_value);
+    // If the expression is a postfix increment, return the old value
+    // otherwise return the new value.
+    return expr.type == DecrementExpr::Type::POSTFIX ? old_value : new_value;
 }
 
-Environment& Interpreter::getGlobalEnvironment()
-{
-    assert(global_environment);
-    return *global_environment;
-}
-
+// The EnvironmentGuard class is used to manage the interpreter's environment stack. It follows the
+// RAII technique, which means that when an instance of the class is created, a copy of the current
+// environment is stored, and the current environment is moved to the new one. If a runtime error is
+// encountered and the interpreter needs to unwind the stack and return to the previous environment,
+// the EnvironmentGuard class's destructor is called, which swaps the resources back to the previous
+// environment.
 Interpreter::EnvironmentGuard::EnvironmentGuard(Interpreter& interpreter,
                                                 std::shared_ptr<Environment> enclosing_env)
     : interpreter{interpreter}, previous_env{interpreter.environment}
 {
-    interpreter.environment = std::make_shared<Environment>(std::move(enclosing_env));
+    interpreter.environment = std::move(enclosing_env);
 }
 
 Interpreter::EnvironmentGuard::~EnvironmentGuard()

@@ -1,8 +1,8 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include "../include/Logger.hpp"
 #include "ExprNode.hpp"
+#include "Logger.hpp"
 #include "StmtNode.hpp"
 #include "Token.hpp"
 #include "Typedef.hpp"
@@ -97,7 +97,7 @@ private:
 
     bool check(TokenType type) const;
 
-    void consume(TokenType type, std::string msg);
+    Token consume(TokenType type, std::string msg);
 
     void synchronize();
 
@@ -105,7 +105,7 @@ private:
 
     const Token& peek() const;
 
-    const Token& previous() const;
+    Token previous() const;
 
     class ParseError : public std::runtime_error
     {

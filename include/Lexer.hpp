@@ -1,7 +1,7 @@
 #ifndef LEXER_HPP
 #define LEXER_HPP
 
-#include "../include/Token.hpp"
+#include "Token.hpp"
 #include <unordered_map>
 #include <vector>
 

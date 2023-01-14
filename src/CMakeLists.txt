@@ -20,6 +20,7 @@ target_sources(jlox-cpp
         FunctionType.cpp
         BuiltIn.cpp
         ListType.cpp
+        Resolver.cpp
         )
 
 add_executable(main main.cpp)
