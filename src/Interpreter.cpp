@@ -132,7 +132,7 @@ void Interpreter::resolve(const Expr& expr_ptr, size_t distance)
     locals.try_emplace(&expr_ptr, distance);
 }
 
-std::any Interpreter::lookUpVariable(const Token& identifier, const Expr* expr_ptr) const
+shared_ptr_any Interpreter::lookUpVariable(const Token& identifier, const Expr* expr_ptr) const
 {
     if (locals.contains(expr_ptr))
     {
@@ -173,7 +173,7 @@ void Interpreter::visit(const PrintStmt& stmt)
 
 void Interpreter::visit(const BlockStmt& stmt)
 {
-    executeBlock(stmt.statements, environment);
+    executeBlock(stmt.statements, std::make_shared<Environment>(environment));
 }
 
 void Interpreter::visit(const ClassStmt& stmt)
@@ -274,7 +274,7 @@ void Interpreter::visit(const WhileStmt& stmt)
 void Interpreter::visit(const ForStmt& stmt)
 {
     // Enter a new environment.
-    EnvironmentGuard environment_guard{*this, environment};
+    EnvironmentGuard environment_guard{*this, std::make_shared<Environment>(environment)};
 
     // If the for loop has an initializer, we execute it.
     if (stmt.initializer)
@@ -422,7 +422,19 @@ std::any Interpreter::visit(const UnaryExpr& expr)
 
 std::any Interpreter::visit(const VarExpr& expr)
 {
-    return lookUpVariable(expr.identifier, &expr);
+    // Retrieve the value associated with the identifier.
+    auto value = lookUpVariable(expr.identifier, &expr);
+
+    // If the value is of type list or string,
+    // return a reference to the object instead.
+    if (const auto& value_type = std::any_cast<shared_ptr_any>(value)->type();
+        value_type == typeid(List) || value_type == typeid(std::string))
+    {
+        return value;
+    }
+
+    // Else return the objects value.
+    return *(std::any_cast<shared_ptr_any>(value));
 }
 
 std::any Interpreter::visit(const GroupingExpr& expr)
@@ -439,6 +451,7 @@ std::any Interpreter::visit(const AssignExpr& expr)
 {
     // Evaluate the assigned value.
     auto value = evaluate(*expr.value);
+
     // Assign the new value to the variable.
     assignVariable(&expr, expr.identifier, value);
 
@@ -489,7 +502,7 @@ std::any Interpreter::visit(const CallExpr& expr)
                                            std::to_string(arguments.size()) + " .");
     }
 
-    // returns by calling the function.
+    // Return by calling the function.
     return function->call(*this, arguments);
 }
 
@@ -526,7 +539,7 @@ std::any Interpreter::visit(const LogicalExpr& expr)
             return left;
         }
     }
-    // If the operator is AND and the left operand is falsy, return the left operand.
+    // If the operator is 'AND' and the left operand is falsy, return the left operand.
     else if (!isTruthy(left))
     {
         return left;
@@ -539,12 +552,12 @@ std::any Interpreter::visit(const LogicalExpr& expr)
 
 std::any Interpreter::visit(const ListExpr& expr)
 {
-    auto list = std::make_shared<List>();
+    List list;
     // Evaluate each item contained in the list.
     for (const auto& item : expr.items)
     {
         assert(item);
-        list->append(evaluate((*item)));
+        list.append(evaluate((*item)));
     }
 
     return list;
@@ -552,101 +565,120 @@ std::any Interpreter::visit(const ListExpr& expr)
 
 std::any Interpreter::visit(const SubscriptExpr& stmt)
 {
-    auto value = lookUpVariable(stmt.identifier, &stmt);
+    // Get the pointer for the list object.
+    auto value_ptr = lookUpVariable(stmt.identifier, &stmt);
 
-    // Check if the value is a list, if not throw a runtime error.
-    if (value.type() != typeid(std::shared_ptr<List>))
+    // Check if the pointers value is a list, if not throw a runtime error.
+    if (value_ptr->type() != typeid(List))
     {
         throw RuntimeError(stmt.identifier,
-                           "Object '" + stmt.identifier.lexeme + " is not subscriptable.");
+                           "Object '" + stmt.identifier.lexeme + "' is not subscriptable.");
     }
 
-    // Evaluate the index expression.
-    auto index_value = evaluate(*stmt.index);
-    int index_cast;
-    size_t object_size = 0u; // Refers to the size of the original list object.
+    // Dereference the pointer to access the underlying objects items.
+    auto items = *(std::any_cast<shared_ptr_any>(value_ptr));
 
-    if (index_value.type() == typeid(double))
+    // Evaluate the index expression. Need to use multiple temporary variables for type safety.
+    auto index = evaluate(*stmt.index);
+    double index_cast = 0;
+
+    // Refers to the size of the original list object.
+    size_t object_size = 0u;
+
+    // Anything else than numbers for indexes are permitted.
+    if (index.type() == typeid(int))
     {
-        index_cast = static_cast<int>(std::any_cast<double>(index_value));
+        index_cast = static_cast<double>(std::any_cast<int>(index));
     }
-    else if (index_value.type() == typeid(int))
+    else if (index.type() == typeid(double))
     {
-        index_cast = std::any_cast<int>(index_value);
+        index_cast = std::any_cast<double>(index);
     }
     else
     {
         throw RuntimeError(stmt.identifier, "Indices must be integers.");
     }
 
+    // Throw an error if index is not an integer.
+    if (static_cast<int>(index_cast) != index_cast)
+    {
+        throw RuntimeError(stmt.identifier, "Indices must be integers.");
+    }
+
     try
     {
-        // Get the shared pointer to the list.
-        auto list_ptr = std::any_cast<std::shared_ptr<List>>(value);
-        object_size = list_ptr->length();
+        auto list = std::any_cast<List>(items);
+        object_size = list.length();
 
         // Allows negative indexes for reverse order.
         if (index_cast < 0)
         {
-            index_cast = static_cast<int>(list_ptr->length()) + index_cast;
+            index_cast = static_cast<int>(list.length()) + index_cast;
         }
 
         // If value is associated with the subscript expression, new value will be assigned to the
         // corresponding index.
         if (stmt.value)
         {
-            list_ptr->at(index_cast) = evaluate(*stmt.value);
+            list.at(index_cast) = evaluate(*stmt.value);
         }
 
+        // Update the pointed object with the new list.
+        *value_ptr = list;
+
         // Return the value at index.
-        return list_ptr->at(index_cast);
+        return list.at(index_cast);
     }
     catch (const std::out_of_range&)
     {
-        throw RuntimeError(stmt.identifier,
-                           "Index out of range. Index is " + std::to_string(index_cast) +
-                               " but object size is " + std::to_string(object_size));
+        throw RuntimeError(stmt.identifier, "Index out of range. Index is " +
+                                                std::to_string(static_cast<int>(index_cast)) +
+                                                " but object size is " +
+                                                std::to_string(object_size));
     }
 }
 
 std::any Interpreter::visit(const IncrementExpr& expr)
 {
     // Get the current value of the variable that is being incremented.
-    const auto old_value = lookUpVariable(expr.identifier, &expr);
+    auto old_value = lookUpVariable(expr.identifier, &expr);
 
-    if (old_value.type() != typeid(double))
+    if (old_value->type() != typeid(double))
     {
         throw RuntimeError(expr.identifier,
                            "Cannot increment a non integer type '" + expr.identifier.lexeme + "'.");
     }
 
     // Increment the value by 1.
-    const double new_value = std::any_cast<double>(old_value) + 1;
-    // Assign the new value to the variable.
-    assignVariable(&expr, expr.identifier, new_value);
+    const double new_value = std::any_cast<double>(*old_value) + 1;
+
+    // Update the object being pointed to by.
+    *old_value = std::any_cast<double>(*old_value) + 1;
+
     // If the expression is a postfix increment, return the old value
     // otherwise return the new value.
-    return expr.type == IncrementExpr::Type::POSTFIX ? old_value : new_value;
+    return expr.type == IncrementExpr::Type::POSTFIX ? new_value - 1 : new_value;
 }
 
 std::any Interpreter::visit(const DecrementExpr& expr)
 {
     // Get the current value of the variable that is being incremented.
-    const auto old_value = lookUpVariable(expr.identifier, &expr);
+    auto old_value = lookUpVariable(expr.identifier, &expr);
 
-    if (old_value.type() != typeid(double))
+    if (old_value->type() != typeid(double))
     {
         throw RuntimeError(expr.identifier,
                            "Cannot decrement a non integer type '" + expr.identifier.lexeme + "'.");
     }
 
     // Decrement the value by 1.
-    const double new_value = std::any_cast<double>(old_value) - 1;
+    const double new_value = std::any_cast<double>(*old_value) - 1;
     // Assign the new value to the variable.
-    assignVariable(&expr, expr.identifier, new_value);
+    *old_value = std::any_cast<double>(*old_value) - 1;
+
     // If the expression is a postfix increment, return the old value
     // otherwise return the new value.
-    return expr.type == DecrementExpr::Type::POSTFIX ? old_value : new_value;
+    return expr.type == DecrementExpr::Type::POSTFIX ? new_value + 1 : new_value;
 }
 
 // The EnvironmentGuard class is used to manage the interpreter's environment stack. It follows the

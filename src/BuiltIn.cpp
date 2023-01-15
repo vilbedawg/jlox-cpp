@@ -30,7 +30,7 @@ size_t PrintCallable::getArity() const
 std::any PrintCallable::call(Interpreter& interpreter, const std::vector<std::any>& args) const
 {
     std::stringstream stream;
-    for (auto& arg : args)
+    for (const auto& arg : args)
     {
         stream << stringify(arg, stream) << ' ';
     }
@@ -45,6 +45,10 @@ std::string PrintCallable::toString() const
 
 std::string stringify(const std::any& item, std::stringstream& stream)
 {
+    if (item.type() == typeid(shared_ptr_any)) {
+        return stringify(*(std::any_cast<shared_ptr_any>(item)), stream);
+    }
+
     if (item.type() == typeid(bool))
         return std::any_cast<bool>(item) ? "true" : "false";
 
@@ -78,15 +82,15 @@ std::string stringify(const std::any& item, std::stringstream& stream)
         return std::to_string(std::any_cast<int>(item));
     }
 
-    if (item.type() == typeid(std::shared_ptr<List>))
+    if (item.type() == typeid(List))
     {
-        auto items = std::any_cast<std::shared_ptr<List>>(item);
+        auto items = std::any_cast<List>(item);
         stream << "[";
-        auto len = items->length();
+        auto len = items.length();
         for (size_t i = 0u; i < len; ++i)
         {
             stream << ' ';
-            stream << stringify(items->at(static_cast<int>(i)), stream);
+            stream << stringify(items.at(static_cast<int>(i)), stream);
             stream << ",";
         }
         stream.seekp(-1, std::ios_base::end);

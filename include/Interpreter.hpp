@@ -4,7 +4,6 @@
 #include "Callable.hpp"
 #include "Environment.hpp"
 #include "ExprNode.hpp"
-#include "ListType.hpp"
 #include "RuntimeError.hpp"
 #include "StmtNode.hpp"
 #include "Visitor.hpp"
@@ -82,10 +81,9 @@ private:
 
     void execute(const Stmt& stmt);
 
-    std::any lookUpVariable(const Token& identifier, const Expr*) const;
+    shared_ptr_any lookUpVariable(const Token& identifier, const Expr* expr_ptr) const;
 
-    void assignVariable(const Expr* expr_ptr, const Token& identifier,
-                                     const std::any& value);
+    void assignVariable(const Expr* expr_ptr, const Token& identifier, const std::any& value);
 };
 
 #endif // INTERPRETER_HPP
