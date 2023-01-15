@@ -63,7 +63,7 @@ private:
 
     void resolveLocal(const Expr* expr, const Token& name);
 
-    void resolveFuntion(const FnStmt& stmt, FuncType type);
+    void resolveFunction(const FnStmt& stmt, FuncType type);
 
     void beginScope();
 
