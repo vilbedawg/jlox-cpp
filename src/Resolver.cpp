@@ -42,7 +42,7 @@ void Resolver::resolveLocal(const Expr* expr, const Token& identifier)
     // ... If never found, we can assume that the variable is global.
 }
 
-void Resolver::resolveFuntion(const FnStmt& stmt, FuncType type)
+void Resolver::resolveFunction(const FnStmt& stmt, FuncType type)
 {
     // Push the current function type onto the function stack.
     func_stack.push(type);
@@ -85,14 +85,14 @@ void Resolver::declare(const Token& identifier)
     // Get the innermost scope.
     Scope& scope = scopes.back();
 
-    // Dont allow the same variable declaration more than once.
+    // Don't allow the same variable declaration more than once.
     if (scope.contains(identifier.lexeme))
     {
         Error::addError(identifier, "Variable with the name '" + identifier.lexeme +
                                         "' already exists in this scope");
     }
 
-    // The value associated with a key in the scope map represents whether or not we have completed
+    // The value associated with a key in the scope map represents whether we have completed
     // resolving the initializer for that variable.
     scope.try_emplace(identifier.lexeme, false);
 }
@@ -142,7 +142,7 @@ std::any Resolver::visit(const AssignExpr& expr)
 
 std::any Resolver::visit(const CallExpr& expr)
 {
-    // Resolve the callee of the call expression, e.g the function or class being called.
+    // Resolve the callee of the call expression, e.g. the function or class being called.
     resolve(*expr.callee);
 
     // Resolve each argument passed to the function/class.
@@ -268,7 +268,7 @@ void Resolver::visit(const FnStmt& stmt)
 {
     declare(stmt.identifier);
     define(stmt.identifier);
-    resolveFuntion(stmt, FuncType::FUNCTION);
+    resolveFunction(stmt, FuncType::FUNCTION);
 }
 
 void Resolver::visit(const IfStmt& stmt)
