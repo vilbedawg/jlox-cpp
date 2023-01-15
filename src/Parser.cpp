@@ -461,6 +461,12 @@ unique_expr_ptr Parser::finishSubscript(unique_expr_ptr identifier)
 {
     auto index = orExpression();
     void_cast(consume(TokenType::RIGHT_BRACKET, "Expect ']' after arguments."));
+    
+    if (!dynamic_cast<VarExpr*>(identifier.get()))
+    {
+        throw error(peek(), "Object is not subscriptable.");
+    }
+
     auto var = dynamic_cast<VarExpr*>(identifier.release())->identifier;
 
     return std::make_unique<SubscriptExpr>(std::move(var), std::move(index), nullptr);
