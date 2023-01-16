@@ -248,12 +248,14 @@ unique_expr_ptr Parser::assignment()
     {
         auto value = assignment();
 
+        // Check if the left-hand side of the assign expression is a regular identifier.
         if (dynamic_cast<VarExpr*>(expr.get()))
         {
             return std::make_unique<AssignExpr>(
                 std::move(dynamic_cast<VarExpr*>(expr.release())->identifier), std::move(value));
         }
 
+        // Check if the left-hand side expression is a subscript expression.
         if (auto subscript_ptr = dynamic_cast<SubscriptExpr*>(expr.release()))
         {
             return std::make_unique<SubscriptExpr>(std::move(subscript_ptr->identifier),
@@ -261,6 +263,7 @@ unique_expr_ptr Parser::assignment()
                                                    std::move(value));
         }
 
+        // Otherwise throw error.
         throw error(previous(), "Invalid assignment target.");
     }
 
@@ -315,9 +318,9 @@ unique_expr_ptr Parser::binary(Fn func, const std::initializer_list<TokenType>& 
 
     while (match(token_args))
     {
-        const auto& op = previous();
+        auto op = previous();
         auto right = func();
-        expr = std::make_unique<BinaryExpr>(std::move(expr), op, std::move(right));
+        expr = std::make_unique<BinaryExpr>(std::move(expr), std::move(op), std::move(right));
     }
 
     return expr;
@@ -349,7 +352,7 @@ unique_expr_ptr Parser::unary()
 {
     if (match({TokenType::EXCLAMATION, TokenType::MINUS}))
     {
-        const auto& op = previous();
+        auto op = previous();
         auto right = unary();
 
         return std::make_unique<UnaryExpr>(std::move(op), std::move(right));
@@ -362,7 +365,7 @@ unique_expr_ptr Parser::prefix()
 {
     if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
     {
-        const auto& op = previous();
+        const auto op = previous();
         auto lvalue = consume(TokenType::IDENTIFIER,
                               "Operators '++' and '--' must be applied to and lvalue operand.");
 
@@ -390,13 +393,14 @@ unique_expr_ptr Parser::postfix()
 
     if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
     {
-        const auto& op = previous();
-
+        const auto op = previous();
+        // Forbid incrementing/decrementing rvalues.
         if (!dynamic_cast<VarExpr*>(expr.get()))
         {
             throw error(op, "Operators '++' and '--' must be applied to and lvalue operand.");
         }
 
+        // Concatenating increment/decrement operators is not allowed.
         if (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
         {
             throw error(op, "Operators '++' and '--' cannot be concatenated.");
@@ -461,7 +465,8 @@ unique_expr_ptr Parser::finishSubscript(unique_expr_ptr identifier)
 {
     auto index = orExpression();
     void_cast(consume(TokenType::RIGHT_BRACKET, "Expect ']' after arguments."));
-    
+
+    // Forbid calling rvalues.
     if (!dynamic_cast<VarExpr*>(identifier.get()))
     {
         throw error(peek(), "Object is not subscriptable.");
@@ -494,6 +499,7 @@ unique_expr_ptr Parser::subscript()
 std::vector<unique_expr_ptr> Parser::list()
 {
     std::vector<unique_expr_ptr> items;
+    // Return an empty list if there are no values.
     if (check(TokenType::RIGHT_BRACKET))
     {
         return items;
@@ -574,8 +580,10 @@ unique_expr_ptr Parser::primary()
 
 bool Parser::match(const std::initializer_list<TokenType> token_args)
 {
-    bool is_match = std::ranges::any_of(token_args.begin(), token_args.end(),
-                                        [this](TokenType x) { return check(x); });
+    // Check if any of the tokens match with the next token.
+    bool is_match =
+        std::any_of(token_args.begin(), token_args.end(), [this](TokenType x) { return check(x); });
+
     if (is_match)
     {
         advance();
@@ -586,27 +594,34 @@ bool Parser::match(const std::initializer_list<TokenType> token_args)
 
 Token Parser::consume(TokenType type, std::string msg)
 {
+    // Expects the type of the next token in the token sequence.
     if (!check(type))
     {
+        // If not what expected, throw error.
         throw error(peek(), std::move(msg));
     }
 
+    // Advance to the next token.
     advance();
+
     return previous();
 }
 
 bool Parser::check(TokenType type) const
 {
+    // Return false if all the tokens have been consumed.
     if (isAtEnd())
     {
         return false;
     }
 
+    // Otherwise compare the next tokens type.
     return peek().type == type;
 }
 
 void Parser::advance()
 {
+    // Advance to the next token.
     if (!isAtEnd())
     {
         current++;
@@ -636,6 +651,10 @@ Parser::ParseError Parser::error(const Token& token, std::string msg) const
 
 void Parser::synchronize()
 {
+    // The synchronize function is a method of error recovery for the parser.
+    // It is called when a parse error occurs and its purpose is to bring the parser back into a
+    // state where it can continue parsing. It does so by skipping tokens until it finds a token
+    // that is likely to start a new statement or declaration.
     advance();
     while (!isAtEnd())
     {

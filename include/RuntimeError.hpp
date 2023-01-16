@@ -7,7 +7,7 @@
 class RuntimeError : public std::runtime_error
 {
 public:
-    RuntimeError() = default;
+    RuntimeError();
 
     RuntimeError(const Token& token, const std::string& message)
         : std::runtime_error{message}, token{token}
