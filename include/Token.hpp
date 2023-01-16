@@ -24,9 +24,12 @@ enum class TokenType
 
 struct Token
 {
-    Token(const TokenType type, std::string lexeme, const unsigned int line);
+    Token(TokenType type, std::string lexeme, unsigned int line);
+    Token(Token&& token) noexcept;
+    Token(const Token& token);
+
     const TokenType type;
-    const std::string lexeme;
+    std::string lexeme;
     const unsigned int line;
 };
 

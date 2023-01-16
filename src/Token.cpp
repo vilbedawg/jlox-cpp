@@ -8,6 +8,15 @@ Token::Token(TokenType type, std::string lexeme, unsigned int line)
 {
 }
 
+Token::Token(Token&& token) noexcept
+    : type{token.type}, lexeme{std::move(token.lexeme)}, line{token.line}
+{
+}
+
+Token::Token(const Token& token) : type{token.type}, lexeme{token.lexeme}, line{token.line}
+{
+}
+
 std::ostream& operator<<(std::ostream& os, const TokenType type)
 {
     using enum TokenType;

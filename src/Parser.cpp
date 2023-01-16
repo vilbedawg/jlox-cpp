@@ -145,7 +145,6 @@ unique_stmt_ptr Parser::declaration()
 
 unique_stmt_ptr Parser::printStatement()
 {
-
     auto identifier = previous();
 
     if (!match({TokenType::LEFT_PAREN}))
@@ -177,6 +176,7 @@ unique_stmt_ptr Parser::varDeclaration()
 {
     auto identifier = consume(TokenType::IDENTIFIER, "Expect variable name.");
     auto initializer = match({TokenType::EQUAL}) ? expression() : nullptr;
+
     void_cast(consume(TokenType::SEMICOLON, "Expect ';' after variable declaration."));
 
     return std::make_unique<VarStmt>(std::move(identifier), std::move(initializer));
