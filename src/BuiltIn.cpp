@@ -82,15 +82,15 @@ std::string stringify(const std::any& item, std::stringstream& stream)
         return std::to_string(std::any_cast<int>(item));
     }
 
-    if (item.type() == typeid(List))
+    if (item.type() == typeid(std::shared_ptr<List>))
     {
-        auto items = std::any_cast<List>(item);
+        auto items = std::any_cast<std::shared_ptr<List>>(item);
         stream << "[";
-        auto len = items.length();
+        auto len = items->length();
         for (size_t i = 0u; i < len; ++i)
         {
             stream << ' ';
-            stream << stringify(items.at(static_cast<int>(i)), stream);
+            stream << stringify(items->at(static_cast<int>(i)), stream);
             stream << ",";
         }
         stream.seekp(-1, std::ios_base::end);

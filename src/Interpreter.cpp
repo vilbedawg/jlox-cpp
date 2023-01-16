@@ -258,12 +258,12 @@ void Interpreter::visit(const WhileStmt& stmt)
             // Execute the loop's body.
             execute(*stmt.body);
         }
-        // If a break statement is encountered, exit the loop.
+        // If a continue statement is encountered, continue to the next iteration.
         catch (const ContinueException&)
         {
             // Do nothing.
         }
-        // If a continue statement is encountered, continue to the next iteration.
+        // If a break statement is encountered, exit the loop.
         catch (const BreakException&)
         {
             return;
@@ -425,10 +425,9 @@ std::any Interpreter::visit(const VarExpr& expr)
     // Retrieve the value associated with the identifier.
     auto value = lookUpVariable(expr.identifier, &expr);
 
-    // If the value is of type list or string,
-    // return a reference to the object instead.
+    // If the value is of type list or string, return the pointer to the object.
     if (const auto& value_type = std::any_cast<shared_ptr_any>(value)->type();
-        value_type == typeid(List) || value_type == typeid(std::string))
+        value_type == typeid(std::shared_ptr<List>) || value_type == typeid(std::string))
     {
         return value;
     }
@@ -531,7 +530,7 @@ std::any Interpreter::visit(const LogicalExpr& expr)
     // Evaluate the left operand of the logical expression.
     auto left = evaluate(*expr.left);
 
-    // If the operator is OR and the left operand is truthy, return the left operand.
+    // If the operator is 'OR' and the left operand is truthy, return the left operand.
     if (expr.op.type == TokenType::OR)
     {
         if (isTruthy(left))
@@ -552,12 +551,12 @@ std::any Interpreter::visit(const LogicalExpr& expr)
 
 std::any Interpreter::visit(const ListExpr& expr)
 {
-    List list;
+    auto list = std::make_shared<List>();
     // Evaluate each item contained in the list.
     for (const auto& item : expr.items)
     {
         assert(item);
-        list.append(evaluate((*item)));
+        list->append(evaluate((*item)));
     }
 
     return list;
@@ -565,27 +564,27 @@ std::any Interpreter::visit(const ListExpr& expr)
 
 std::any Interpreter::visit(const SubscriptExpr& stmt)
 {
-    // Get the pointer for the list object.
+    // Get the pointer to the list object associated with the provided identifier.
     auto value_ptr = lookUpVariable(stmt.identifier, &stmt);
 
-    // Check if the pointers value is a list, if not throw a runtime error.
-    if (value_ptr->type() != typeid(List))
+    // Check if the variable is a list, if not throw a runtime error.
+    if (value_ptr->type() != typeid(std::shared_ptr<List>))
     {
         throw RuntimeError(stmt.identifier,
                            "Object '" + stmt.identifier.lexeme + "' is not subscriptable.");
     }
 
-    // Dereference the pointer to access the underlying objects items.
+    // Dereference the pointer to access the underlying objects pointer.
     auto items = *(std::any_cast<shared_ptr_any>(value_ptr));
 
-    // Evaluate the index expression. Need to use multiple temporary variables for type safety.
+    // Evaluate the index expression.
     auto index = evaluate(*stmt.index);
     double index_cast = 0;
 
     // Refers to the size of the original list object.
     size_t object_size = 0u;
 
-    // Anything else than numbers for indexes are permitted.
+    // Anything else than numbers for indexes are not allowed.
     if (index.type() == typeid(int))
     {
         index_cast = static_cast<double>(std::any_cast<int>(index));
@@ -607,27 +606,24 @@ std::any Interpreter::visit(const SubscriptExpr& stmt)
 
     try
     {
-        auto list = std::any_cast<List>(items);
-        object_size = list.length();
+        auto list = std::any_cast<std::shared_ptr<List>>(items);
+        object_size = list->length();
 
         // Allows negative indexes for reverse order.
         if (index_cast < 0)
         {
-            index_cast = static_cast<int>(list.length()) + index_cast;
+            index_cast = static_cast<int>(list->length()) + index_cast;
         }
 
         // If value is associated with the subscript expression, new value will be assigned to the
         // corresponding index.
         if (stmt.value)
         {
-            list.at(index_cast) = evaluate(*stmt.value);
+            list->at(index_cast) = evaluate(*stmt.value);
         }
 
-        // Update the pointed object with the new list.
-        *value_ptr = list;
-
         // Return the value at index.
-        return list.at(index_cast);
+        return list->at(index_cast);
     }
     catch (const std::out_of_range&)
     {
