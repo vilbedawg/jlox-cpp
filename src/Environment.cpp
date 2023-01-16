@@ -53,6 +53,7 @@ void Environment::assign(const Token& identifier, const std::any& value)
     {
         auto& ptr_to_var = values[identifier.lexeme];
         *ptr_to_var = value;
+        return;
     }
 
     if (parent_env)
