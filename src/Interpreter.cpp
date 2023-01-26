@@ -320,6 +320,17 @@ std::any Interpreter::visit(const BinaryExpr& expr)
     auto left = evaluate(*expr.left);
     auto right = evaluate(*expr.right);
 
+    // Dereference the pointer incase evaluate returns one
+    if (left.type() == typeid(shared_ptr_any))
+    {
+        left = *(std::any_cast<shared_ptr_any>(left));
+    }
+
+    if (right.type() == typeid(shared_ptr_any))
+    {
+        right = *(std::any_cast<shared_ptr_any>(right));
+    }
+
     using enum TokenType;
     // Check the type of the operator.
     switch (expr.op.type)
@@ -401,6 +412,12 @@ std::any Interpreter::visit(const UnaryExpr& expr)
 {
     // Evaluate the right-hand side operand of the unary expression.
     auto right = evaluate(*expr.right);
+
+    // Dereference pointer incase evaluate returns one
+    if (right.type() == typeid(shared_ptr_any))
+    {
+        right = *(std::any_cast<shared_ptr_any>(right));
+    }
 
     // Check the type of the operator
     switch (expr.op.type)
