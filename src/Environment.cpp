@@ -51,8 +51,7 @@ void Environment::assign(const Token& identifier, const std::any& value)
 {
     if (values.contains(identifier.lexeme))
     {
-        auto& ptr_to_var = values[identifier.lexeme];
-        *ptr_to_var = value;
+        *(values[identifier.lexeme]) = value;
         return;
     }
 
@@ -67,8 +66,7 @@ void Environment::assign(const Token& identifier, const std::any& value)
 
 void Environment::assignAt(size_t distance, const Token& identifier, const std::any& value)
 {
-    auto& ptr_to_var = ancestor(distance)->values[identifier.lexeme];
-    *ptr_to_var = value;
+    *(ancestor(distance)->values[identifier.lexeme]) = value;
 }
 
 Environment* Environment::ancestor(size_t distance)
